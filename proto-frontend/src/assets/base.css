@@ -1,0 +1,100 @@
+@import "tailwindcss";
+/* Import external fonts and icons */
+@import './fonts.css';
+/* @import 'uicons-regular-rounded.css'; */
+/* @import 'material-icons.css'; */
+
+/* Vendor imports */
+/* @import 'floating-vue/dist/style.css'; */
+/* @import 'vue-skeletor/dist/vue-skeletor.css'; */
+/* @import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'; */
+/* @import 'sl-vue-tree-next/sl-vue-tree-next-minimal.css'; */
+
+/* Floating Vue popper styling */
+.v-popper__popper.v-popper--theme-tooltip {
+    @apply text-xs;
+}
+
+/* input {
+    @apply w-full text-sm rounded-lg px-3 py-2 placeholder-[var(--placeholder)] text-[--input-text] h-9 bg-[#ffffff] border-[var(--input-border)] focus:border-[var(--input-border-focus)] focus:ring-[var(--input-ring-focus)] !important;
+} */
+/* Base layer styles */
+@layer base {
+    :root {
+        --primary: #021aa5;
+        --secondary: #46ace2;
+        --priamry-red: #ec0300;
+        --primary-light: #ccd1ed;
+        --primary-lighter: #e6e8f69e;
+
+        /* Text colors */
+        --body-text: #4b5563;
+        --text-dark: #101827;
+        --text-light: #6b7280;
+
+        /* Font family */
+        --font-family: 'Poppins', sans-serif;
+
+        /* Border colors */
+        --border: #e5e7eb;
+        --border-primary: #3b82f6;
+
+        /* Form colors */
+        --placeholder: #7f7d83;
+        --label: var(--secondary);
+        --input-text: rgb(17, 24, 39);
+        --input-border: #e6e6e6;
+        --input-border-focus: rgb(59, 130, 246);
+        --input-ring: var(--input-border);
+        --input-ring-focus: var(--input-border-focus);
+        --input-danger-color: rgb(220, 38, 38);
+
+        /* Layout settings */
+        --right-sidebar-width: 320px;
+    }
+
+    /* Apply global box model settings and smooth scrolling */
+    * {
+        @apply box-border list-none p-0 m-0 scroll-smooth;
+    }
+
+    /* Full-height utility classes for the layout */
+    html,
+    body,
+    #app {
+        @apply h-full;
+    }
+
+    /* Icon styling */
+    .fi {
+        line-height: 0;
+    }
+
+    body {
+        font-family: var(--font-family);
+        color: var(--body-text);
+    }
+}
+
+
+/* Component-specific styling */
+@layer components {
+    /* Form */
+    /* Button */
+}
+#area-modal-container {
+    background-image: url('@/assets/images/vmo2-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-color: var(--priamry-red);
+    opacity: 1;
+}
+#area-modal {
+    .modal {
+        background-color: rgba(0,0,0, 0.5);
+    }
+}
+
+.ag-watermark {
+    display: none !important;
+}
