@@ -1,27 +1,38 @@
-const mysql = require('mysql2/promise');
-const { database } = require('../config');
+const mysql = require("mysql2/promise");
+const { database } = require("../config");
 
-const dbConfig = {
-  host: database.host,
-  user: database.user,
-  password: database.password,
-  database: database.name
-};
+class DatabaseConnection {
+  constructor() {
+    try {
+      this.pool = mysql.createPool({
+        host: database.host,
+        user: database.user,
+        password: database.password,
+        database: database.name,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+      });
+      console.log("Connection Initialised with DB");
+      
+    } catch (error) {
+      console.error("Database connection failed:", error);
+      process.exit(1);
+    }
+  }
 
-let connection;
+  async getConnection() {
+    return await this.pool.getConnection();
+  }
 
-async function connectDB() {
-  try {
-    connection = await mysql.createConnection(dbConfig);
-    console.log('Connected to MySQL database.');
-  } catch (error) {
-    console.error('Database connection failed:', error);
-    process.exit(1);
+  async query(sql, params = []) {
+    const [results] = await this.pool.execute(sql, params);
+    return results;
+  }
+
+  async close() {
+    await this.pool.end();
   }
 }
 
-function getDB() {
-  return connection;
-}
-
-module.exports = { connectDB, getDB };
+module.exports = new DatabaseConnection();
