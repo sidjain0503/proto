@@ -4,7 +4,7 @@ Proto backend is a nodejs, express, mysql based application.
 Main objectives : 
 1. Modular design 
 2. Avoid dependency injection
-3. data layer with predefinef operations
+3. data layer with predefined operations
 
 ```
 
@@ -30,3 +30,7 @@ proto-backend/
 └── server.js
 
 ````
+
+### Schema validator : 
+
+- This application uses [Ajv](https://ajv.js.org/) as a schema validator 

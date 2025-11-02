@@ -10,12 +10,11 @@ const ajv = new Ajv({
 addFormats(ajv);
 
 // Load all schemas from /schemas/index.js
-const userSchema = require('../schemas/userSchema');
-const baseSchema = require('../schemas/baseSchema');
+const baseSchema = require('../schemas/base');
 
 // Register schemas
 const schemas = {
-  user: userSchema,
+  user: require('../schemas/user'),
   base: baseSchema
 };
 
@@ -24,7 +23,9 @@ function validateData(data, schemaName) {
   const schema = schemas[schemaName];
   
   if (!schema) {
-    throw new Error(`Schema '${schemaName}' not found`);
+    const error = new Error(`Schema '${schemaName}' not found`);
+    error.statusCode = 500;
+    throw error;
   }
 
   const validate = ajv.compile(schema);
@@ -35,30 +36,32 @@ function validateData(data, schemaName) {
       return `${error.instancePath} ${error.message}`;
     }).join(', ');
     
-    throw new Error(`Validation failed: ${errors}`);
+    const error = new Error(`Validation failed: ${errors}`);
+    error.statusCode = 400;
+    throw error;
   }
 
   return true;
 }
 
-// Generic validator for any schema (useful for dynamic validation)
-function validateWithSchema(data, schema) {
-  const validate = ajv.compile(schema);
-  const valid = validate(data);
+// // Generic validator for any schema (useful for dynamic validation)
+// function validateWithSchema(data, schema) {
+//   const validate = ajv.compile(schema);
+//   const valid = validate(data);
 
-  if (!valid) {
-    const errors = validate.errors.map(error => {
-      return `${error.instancePath} ${error.message}`;
-    }).join(', ');
+//   if (!valid) {
+//     const errors = validate.errors.map(error => {
+//       return `${error.instancePath} ${error.message}`;
+//     }).join(', ');
     
-    throw new Error(`Validation failed: ${errors}`);
-  }
+//     throw new Error(`Validation failed: ${errors}`);
+//   }
 
-  return true;
-}
+//   return true;
+// }
 
 module.exports = {
   validateData,
-  validateWithSchema,
+//   validateWithSchema,
   ajv
 };

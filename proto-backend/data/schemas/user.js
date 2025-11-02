@@ -20,11 +20,6 @@ module.exports = {
         type: 'string', 
         minLength: 6 
       },
-    //   tenant_id: { 
-    //     type: 'string', 
-    //     minLength: 1, 
-    //     maxLength: 50 
-    //   },
       last_login: { 
         type: ['string', 'null'], 
         format: 'date-time' 
@@ -42,6 +37,6 @@ module.exports = {
         format: 'date-time' 
       }
     },
-    required: ['name', 'email', 'password'],
+    // required: ['name', 'email', 'password'],
     additionalProperties: false
   };

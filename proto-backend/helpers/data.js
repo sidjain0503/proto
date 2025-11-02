@@ -1,22 +1,23 @@
-async function buildWhereClause(conditions = {}) {
-    let whereClause = 'WHERE deleted_at IS NULL';
-    const params = [];
-    
-    const validConditions = Object.entries(conditions).filter(([key, value]) => 
-      value !== undefined && value !== null
-    );
+async function buildWhereClause(filters = {}) {
+  let whereClause = "WHERE";
+  const params = [];
 
-    if (validConditions.length > 0) {
-      const conditionsStr = validConditions
-        .map(([key]) => `${key} = ?`)
-        .join(' AND ');
-      whereClause += ` AND ${conditionsStr}`;
-      validConditions.forEach(([, value]) => params.push(value));
-    }
+  const validfilters = Object.entries(filters).filter(
+    ([key, value]) => value !== undefined && value !== null
+  );
 
-    return { where: whereClause, params };
+  if (validfilters.length > 0) {
+    const filtersStr = validfilters.map(([key]) => `${key} = ?`).join(" AND ");
+    whereClause += ` ${filtersStr}`;
+
+    validfilters.forEach(([, value]) => params.push(value));
+  } else {
+    whereClause = "";
   }
 
-  module.exports = {
-    buildWhereClause
-  }
+  return { where: whereClause, params };
+}
+
+module.exports = {
+  buildWhereClause,
+};

@@ -1,2 +1,3 @@
+require('./get')
  require('./insert')
- require('./get')
+ require('./update')
