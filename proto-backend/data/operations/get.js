@@ -1,7 +1,7 @@
 const db = require("../../db");
 const { buildWhereClause } = require("../../helpers/data");
 
-async function getAll(tableName, conditions = {}, options = {}) {
+async function getModel(tableName, conditions = {}, options = {}) {
   const { where, params } = await buildWhereClause(conditions.filters);
   
   const select = conditions.select || "*";
@@ -21,5 +21,5 @@ async function getAll(tableName, conditions = {}, options = {}) {
 }
 
 module.exports = {
-  getAll,
+  getModel,
 };

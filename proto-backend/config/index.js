@@ -9,6 +9,8 @@ module.exports = {
     name: process.env.DB_NAME,
     port: process.env.DB_PORT
   },
-  jwtSecret: process.env.JWT_SECRET,
+  jwtSecretKey: process.env.JWT_SECRET,
+  AUTH_TOKEN_LIFE: process.env.SECURITY_TOKEN_LIFE,
+  AUTH_TOKEN_SECRET: process.env.SECURITY_TOKEN_SECRET,
   openAIApiKey: process.env.OPENAI_API_KEY
 };

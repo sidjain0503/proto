@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-require('./basic')(router);
+require('./auth')(router);
 
 module.exports = router;
