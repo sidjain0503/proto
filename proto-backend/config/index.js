@@ -12,5 +12,5 @@ module.exports = {
   jwtSecretKey: process.env.JWT_SECRET,
   AUTH_TOKEN_LIFE: process.env.SECURITY_TOKEN_LIFE,
   AUTH_TOKEN_SECRET: process.env.SECURITY_TOKEN_SECRET,
-  openAIApiKey: process.env.OPENAI_API_KEY
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY
 };
