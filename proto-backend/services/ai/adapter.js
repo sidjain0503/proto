@@ -1,14 +1,14 @@
 const OpenAIProvider = require("./providers/OpenAIProvider");
+const DeepSeekProvider = require("./providers/DeepSeekProvider");
 
 const model_registry = {
   openai: (opts = {}) => new OpenAIProvider(opts),
+  deepseek: (opts = {}) => new DeepSeekProvider(opts),
 };
 
 class Adapter {
-  constructor({
-    providerName = "openai" /* Default */,
-    providerOpts = {},
-  } = {}) {
+  constructor(providerName = "openai", providerOpts = {}) {
+    // console.log('Default ',providerName, providerOpts)
     this.provider = model_registry[providerName](providerOpts);
   }
 

@@ -132,7 +132,7 @@ const loginUser = async (reqBody) => {
         name: _user.name,
         id: _user.id,
       };
-      _token.TokenString = jwt.sign(_token, config.AUTH_TOKEN_SECRET, {
+      _token.access_token = jwt.sign(_token, config.AUTH_TOKEN_SECRET, {
         expiresIn: config.AUTH_TOKEN_LIFE,
         algorithm: "HS256",
       });

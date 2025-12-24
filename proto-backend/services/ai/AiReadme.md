@@ -91,3 +91,50 @@ This document needs to be enhanced later.
 - Calls OpenAI
 - Implements generate()
 - Implements stream()
+
+
+
+---
+
+## Further Improvements: Auditing and Logging Usage Data
+
+Currently, the model response contains tokens and other usage details. To enable better monitoring, rate limiting, and auditing, we can extend the AI layer as follows:
+
+- Whenever a model call completes, the adapter will log relevant details (e.g., model, tokens used, and user_id if available) after each run.
+- This audit log can later be analyzed for user behavior, enforcing rate limits, cost tracking, and debugging anomalous activity.
+
+### Example improvement (pseudo/JS):
+
+In the `Adapter` class (e.g., in `adapter.js`):
+
+```js
+async generate(request) {
+  const result = await this.provider.generate(request);
+  // Log/audit usage:
+  // Suppose request.userId is propagated as part of the request
+  this.logUsage({
+    user_id: request.userId,
+    model: result.model,
+    tokens_used: result.usage?.total_tokens,
+    timestamp: Date.now(),
+  });
+  return {
+    text: result.text,
+    usage: result.usage,
+    model: result.model,
+  };
+}
+
+logUsage(data) {
+  // Implement your audit logic here. Can be DB insert, file log, etc.
+  console.log(`[AI USAGE]`, data);
+}
+```
+
+- You should propagate `user_id` through all AI requests if you want per-user tracking.
+- This audit layer can later be extended to actually write to a database or any persistent store, making it easy to enforce quotas or monitor for abuse by user or API key.
+- It’s best to standardize this in the Adapter so every provider is covered uniformly, no matter the upstream API format.
+
+---
+
+

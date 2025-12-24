@@ -1,10 +1,11 @@
+const { validation } = require("../middleware/authValidationMiddleware");
 const AIService  = require("../services/ai/AIService");
 
 
 const ai = new AIService();
 
 module.exports = (router) => {
-  router.post("/generate", async (req, res) => {
+  router.post("/ai/generate", validation,  async (req, res) => {
     try {
       const out = await ai.generateResponse({
         userId: req.user?.id,

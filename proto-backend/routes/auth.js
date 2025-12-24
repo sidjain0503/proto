@@ -26,7 +26,7 @@ module.exports = (router) => {
   });
 
 
-  router.get("/users",validation, async (req, res, next) => {
+  router.get("/users", async (req, res, next) => {
     try {
       const result = await getAllUsers();
       res.status(result.code).json(result.data);

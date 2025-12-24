@@ -1,9 +1,11 @@
-const Adapter = require("./adapter");
+const Adapter = require("./Adapter");
 
 class AIService {
   constructor({ logger = console } = {}) {
     this.logger = logger;
-    this.adapter = new Adapter({});
+    this.adapter = new Adapter("deepseek", {
+      model: "deepseek/deepseek-r1-0528:free",
+    });
   }
 
   preprocessPrompt(prompt) {
