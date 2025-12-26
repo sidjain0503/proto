@@ -1,4 +1,7 @@
+'use client'
 import { menuItems } from "@/app/menu"
+import { useAuth } from "@/contexts/AuthContext"
+import { useRouter, usePathname } from "next/navigation"
 import {
     Profile,
     Sidebar,
@@ -10,8 +13,23 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
   } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { LogOut } from "lucide-react"
   
   export function AppSidebar() {
+    const { user, logout, isAuthenticated, loading } = useAuth()
+    const router = useRouter()
+    const pathname = usePathname()
+
+    const handleLogout = () => {
+      logout()
+      router.push('/login')
+    }
+
+    if (pathname === '/login' || loading) {
+      return null
+    }
+
     return (
       <Sidebar>
         <SidebarHeader />
@@ -31,8 +49,26 @@ import {
             </SidebarMenu>
           <SidebarGroup />
         </SidebarContent>
-        <SidebarFooter >
-            <Profile user={{ name: "Siddharth Chopda", email: "siddharth.chopda@gmail.com" }} img="/profile.jpeg" />
+        <SidebarFooter>
+          {user && (
+            <>
+              <Profile 
+                user={{ name: user.name || "User", email: user.email || "" }} 
+                img="/profile.jpeg" 
+              />
+              <div className="px-2 pb-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </>
+          )}
         </SidebarFooter>
       </Sidebar>
     )

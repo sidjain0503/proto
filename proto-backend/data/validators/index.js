@@ -14,6 +14,7 @@ const baseSchema = require('../schemas/base');
 
 // Register schemas
 const schemas = {
+  ai_usage: require('../schemas/ai_usage'),
   user: require('../schemas/user'),
   base: baseSchema
 };

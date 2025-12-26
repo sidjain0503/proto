@@ -12,7 +12,16 @@ class DeepSeekProvider {
     this.appName = appName;
   }
 
-
+  estimatePromptTokens(messages) {
+    return Math.ceil(
+      messages.reduce((acc, m) => acc + (m.content?.length || 0), 0) / 4
+    );
+  }
+  
+  calculateCredits(totalTokens) {
+    // placeholder pricing
+    return totalTokens * 0.000001;
+  }
 
   async generate({ messages, maxTokens = 512, temperature = 0.2 }) {
     if (!this.apiKey) {
@@ -52,7 +61,7 @@ class DeepSeekProvider {
     if (!this.apiKey) {
       throw new Error("OPENROUTER_API_KEY is not configured");
     }
-
+  
     const response = await fetch(`${this.baseURL}/chat/completions`, {
       method: "POST",
       headers: {
@@ -67,46 +76,75 @@ class DeepSeekProvider {
         stream: true,
       }),
     });
-
+  
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: "Unknown error" }));
       throw new Error(`OpenRouter API error: ${JSON.stringify(error)}`);
     }
-
+  
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+  
     let buffer = "";
-
+    let completionTokens = 0;
+    let usageFromProvider = null;
+  
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
+  
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
+        buffer = lines.pop() || "";
+  
         for (const line of lines) {
-          if (line.trim() === "") continue;
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            if (data === "[DONE]") {
-              return;
+          if (!line.startsWith("data: ")) continue;
+  
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") break;
+  
+          try {
+            const parsed = JSON.parse(data);
+  
+            // token streaming
+            const token = parsed.choices?.[0]?.delta?.content;
+            if (token) {
+              completionTokens++;
+              onToken(token);
             }
-            try {
-              const parsed = JSON.parse(data);
-              const token = parsed.choices?.[0]?.delta?.content || "";
-              if (token) onToken(token);
-            } catch (e) {
-              // Skip invalid JSON lines
+  
+            // OpenRouter sometimes sends usage at the end
+            if (parsed.usage) {
+              usageFromProvider = parsed.usage;
             }
+          } catch {
+            // ignore malformed chunks
           }
         }
       }
     } finally {
       reader.releaseLock();
     }
+  
+    const promptTokens =
+      usageFromProvider?.prompt_tokens ??
+      this.estimatePromptTokens(messages); // fallback
+  
+    const totalTokens =
+      usageFromProvider?.total_tokens ??
+      promptTokens + completionTokens;
+  
+    return {
+      provider: "deepseek",
+      model: this.model,
+      promptTokens,
+      completionTokens,
+      totalTokens,
+      creditsUsed: this.calculateCredits(totalTokens),
+    };
   }
+  
 }
 
 module.exports = DeepSeekProvider;

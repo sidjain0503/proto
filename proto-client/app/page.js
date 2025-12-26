@@ -1,4 +1,5 @@
 'use client'
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Search from "@/components/shared/Search";
 import { Button } from "@/components/ui/button";
 import ProjectGrid from "@/components/view/projects/ProjectGrid";
@@ -33,15 +34,17 @@ export default function Home() {
   };
 
   return (
-    <div className="p-4 space-y-4">
-     <div className="flex justify-between items-center gap-4">
-      <Search placeholder="Search projects" className="flex-1" onChange={handleSearch}/>
-      <Button size={"lg"}x className="rounded-full">
-        <LucidePlus className="w-4 h-4" />
-        Add Project
-      </Button>
-     </div>
-      <ProjectGrid projects={projects} />
-    </div>
+    <ProtectedRoute>
+      <div className="p-4 space-y-4">
+       <div className="flex justify-between items-center gap-4">
+        <Search placeholder="Search projects" className="flex-1" onChange={handleSearch}/>
+        <Button size={"lg"} className="rounded-full">
+          <LucidePlus className="w-4 h-4" />
+          Add Project
+        </Button>
+       </div>
+        <ProjectGrid projects={projects} />
+      </div>
+    </ProtectedRoute>
   );
 }
