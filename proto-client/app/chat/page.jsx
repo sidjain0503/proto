@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Send, Loader2 } from "lucide-react";
 import aiService from "@/lib/Services/AIService";
+import MarkdownMessage from "@/components/shared/MarkdownMessage";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
@@ -126,9 +127,7 @@ export default function ChatPage() {
                         : "bg-muted"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
+                     <MarkdownMessage content={message.content} />
                   </div>
                 </div>
               ))}
