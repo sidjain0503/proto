@@ -49,7 +49,6 @@ class DeepSeekProvider {
     }
 
     const res = await response.json();
-
     return {
       text: res.choices?.[0]?.message?.content || "",
       usage: res.usage,
@@ -76,7 +75,7 @@ class DeepSeekProvider {
         stream: true,
       }),
     });
-  
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: "Unknown error" }));
       throw new Error(`OpenRouter API error: ${JSON.stringify(error)}`);
@@ -135,14 +134,18 @@ class DeepSeekProvider {
       usageFromProvider?.total_tokens ??
       promptTokens + completionTokens;
   
-    return {
-      provider: "deepseek",
-      model: this.model,
-      promptTokens,
-      completionTokens,
-      totalTokens,
-      creditsUsed: this.calculateCredits(totalTokens),
-    };
+      const usage = {
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: totalTokens,
+      };
+    
+      return {
+        provider: "deepseek",
+        model: this.model,
+        usage,
+        creditsUsed: this.calculateCredits(totalTokens),
+      };
   }
   
 }

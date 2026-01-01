@@ -3,8 +3,8 @@ import BaseAPI from "@/lib/api";
 class AiService extends BaseAPI {
   _url = "/ai";
 
-  async generate(prompt, onToken) {
-    await this.stream(`${this._url}/generate`, prompt, onToken);
+  async generate(message, onToken) {
+    await this.stream(`${this._url}/generate`, message, onToken);
   }
 }
 

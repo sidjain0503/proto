@@ -45,7 +45,7 @@ export default function ChatPage() {
       ]);
 
       // Streaming callback updates the last assistant message
-      const response = await aiService.generate(userMessage, (token) => {
+      const response = await aiService.generate([{role: "user" ,content: userMessage}], (token) => {
         setMessages((prev) => {
           // Find last assistant message and append token
           const lastIndex = prev.length - 1;

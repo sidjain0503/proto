@@ -116,7 +116,7 @@ export class BaseAPI {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" ,     ...(token && { Authorization: `Bearer ${token}` }),},
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify( [...prompt] ),
     });
 
     if (!response.body) throw new Error("No stream");
