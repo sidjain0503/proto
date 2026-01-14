@@ -3,20 +3,24 @@ const { database } = require("../config");
 
 class DatabaseConnection {
   constructor() {
+    this.pool = mysql.createPool({
+      host: database.host,
+      user: database.user,
+      password: database.password,
+      database: database.name,
+      port: database.port || 3306,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
+  }
+
+  async init() {
     try {
-      this.pool = mysql.createPool({
-        host: database.host,
-        user: database.user,
-        password: database.password,
-        database: database.name,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-      });
-      console.log("Connection Initialised with DB");
-      
+      await this.pool.query("SELECT 1");
+      console.log("DB Initialisation Successful");
     } catch (error) {
-      console.error("Database connection failed:", error);
+      console.error("Initial Starttup Error: DB unreachable:", error.message);
       process.exit(1);
     }
   }
