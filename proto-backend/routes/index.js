@@ -3,6 +3,6 @@ const router = express.Router();
 
 
 require('./AIRoutes')(router);
-require('./auth')(router);
+require('./Auth')(router);
 
 module.exports = router;

@@ -1,6 +1,16 @@
 const mysql = require("mysql2/promise");
 const { database } = require("../config");
+const { ENVIRONMENT } = require("../config");
 
+let additionalDbConfig = {};
+
+if (ENVIRONMENT !== "local") {
+  additionalDbConfig = {
+    ssl: {
+      rejectUnauthorized: true,
+    },
+  };
+}
 class DatabaseConnection {
   constructor() {
     this.pool = mysql.createPool({
@@ -12,9 +22,7 @@ class DatabaseConnection {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
-      ssl: {
-        rejectUnauthorized: true,
-      },
+      ...additionalDbConfig,
     });
   }
 

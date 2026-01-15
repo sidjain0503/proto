@@ -1,6 +1,7 @@
 const { insertModel } = require("../../data/operations/insert");
 const Adapter = require("./Adapter");
 
+
 class AIService {
   constructor({ logger = console } = {}) {
     this.logger = logger;

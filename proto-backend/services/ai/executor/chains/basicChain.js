@@ -1,5 +1,5 @@
-const LLMStep = require("../steps/llmSteps");
-const StreamingLLMStep = require("../steps/streamingLLMStep");
+const LLMStep = require("../steps/LlmSteps");
+const StreamingLLMStep = require("../steps/StreamingLLMStep");
 
 
 class BasicChatChain {

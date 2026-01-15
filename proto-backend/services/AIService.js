@@ -1,6 +1,6 @@
-const ExecutionContext = require("./ai/executor/aicontext/executionContext");
-const BasicChatChain = require("./ai/executor/chains/basicChain");
-const ChainRunner = require("./ai/executor/chains/chainRunner");
+const ExecutionContext = require("./ai/executor/aicontext/ExecutionContext");
+const BasicChatChain = require("./ai/executor/chains/BasicChain");
+const ChainRunner = require("./ai/executor/chains/ChainRunner");
 
 async function runChat(req, res) {
   try{

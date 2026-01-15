@@ -1,4 +1,4 @@
-const { model_registry } = require("./model_registry");
+const { model_registry } = require("./ModelRegistry");
 
 
 class Adapter {
