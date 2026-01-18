@@ -15,7 +15,7 @@ class ExecutionContext {
   
       this.createdAt = Date.now();
 
-      console.log("ExecutionContext", this.messages, this.userId, this.provider, this.providerOpts);
+      // console.log("ExecutionContext", this.messages, this.userId, this.provider, this.providerOpts);
     }
   
     addMessage(role, content) {
