@@ -1,5 +1,6 @@
 const Ajv = require('ajv');
 const addFormats = require('ajv-formats');
+const { schemas } = require('../schemas');
 
 const ajv = new Ajv({
   allErrors: true,
@@ -9,17 +10,6 @@ const ajv = new Ajv({
 
 addFormats(ajv);
 
-// Load all schemas from /schemas/index.js
-const baseSchema = require('../schemas/base');
-
-// Register schemas
-const schemas = {
-  ai_usage: require('../schemas/ai_usage'),
-  user: require('../schemas/user'),
-  base: baseSchema
-};
-
-// Reusable validation function
 function validateData(data, schemaName) {
   const schema = schemas[schemaName];
   
