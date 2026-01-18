@@ -2,6 +2,9 @@
 
 **Proto is a full-stack AI SaaS template that treats AI as infrastructure, not a feature.**
 
+<img width="1710" height="771" alt="image" src="https://github.com/user-attachments/assets/e72b64d0-20fc-407f-b21e-8d8125659ec2" />
+
+
 ## Philosophy
 
 **AI as Infrastructure**: Rather than coupling your app to a single LLM provider, Proto builds disciplined abstractions that let you:
