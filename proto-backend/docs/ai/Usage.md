@@ -49,6 +49,27 @@ The Proto AI layer is a modular, provider-agnostic system for orchestrating LLM 
 
 ## Quick Start
 
+### Chat Service (Recommended for Chat Applications)
+
+The `ChatService` provides a complete chat implementation with session management, message persistence, and streaming:
+
+```javascript
+// POST /chat/:sessionId/message
+// Request body: [{ content: "Hello, how are you?" }]
+
+// Flow:
+// 1. User message is stored in database immediately
+// 2. Response streams to client in real-time
+// 3. Assistant response is stored after streaming completes
+// 4. Session title auto-generates after first exchange
+```
+
+**Key Features:**
+- **Message Persistence**: Both user and assistant messages are automatically stored
+- **Streaming**: Real-time token-by-token response delivery
+- **Session Management**: Conversations are organized by session
+- **Auto Title Generation**: Session titles are generated using AI after the first exchange
+
 ### Basic Usage (Simple Chat)
 
 The simplest way to use the AI layer is through the existing route:
@@ -165,7 +186,22 @@ const result = await runner.run(chain, ctx);
 
 **For Streaming:**
 - Response is automatically streamed to `res` object
-- No return value needed
+- Tokens are sent to client as they arrive
+- Full response is available in `result.output` after completion
+- **Important**: For chat applications, store the assistant message after streaming completes:
+
+```javascript
+const result = await runner.run(chain, ctx);
+
+// Store assistant response after streaming completes
+if (result && result.output) {
+  await insertModel("message", {
+    session_id: sessionId,
+    content: result.output,
+    role: "assistant",
+  }, "message");
+}
+```
 
 **For Non-Streaming:**
 ```javascript
@@ -175,6 +211,89 @@ res.json({
   usage: result.context.usage 
 });
 ```
+
+---
+
+## Chat Service Implementation
+
+The `ChatService` demonstrates a complete chat implementation using chains with message persistence.
+
+### Flow Overview
+
+```
+1. User sends message → Store user message in DB
+2. Load conversation history → Build ExecutionContext
+3. Stream AI response → Send tokens to client in real-time
+4. Store assistant response → Save complete response after streaming
+5. Auto-generate title → Background task generates session title
+```
+
+### Complete Example
+
+```javascript
+const sendMessage = async (sessionId, reqBody, req, res) => {
+  const { content } = reqBody[0];
+
+  // 1. Set up streaming headers
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  // 2. Load conversation history from database
+  const messages = await getModel("message", {
+    filters: { session_id: sessionId },
+    select: "role,content",
+  });
+
+  // 3. Create execution context with history
+  const ctx = new ExecutionContext({
+    userId: req.user.id,
+    messages: messages,
+    provider: "deepseek",
+    providerOpts: {
+      model: "deepseek/deepseek-r1-0528:free",
+    },
+  });
+
+  // 4. Add user message to context
+  ctx.addMessage("user", content);
+
+  // 5. Store user message in database
+  await insertModel("message", {
+    session_id: sessionId,
+    content: content,
+    role: "user",
+  }, "message");
+
+  // 6. Create and run streaming chain
+  const chain = new BasicChatChain({
+    stream: true,
+    res,
+  });
+
+  const runner = new ChainRunner();
+  const result = await runner.run(chain, ctx);
+
+  // 7. Store assistant response after streaming completes
+  if (result && result.output) {
+    await insertModel("message", {
+      session_id: sessionId,
+      content: result.output,
+      role: "assistant",
+    }, "message");
+  }
+
+  return result;
+};
+```
+
+### Key Points
+
+1. **Message Order**: User message is stored before streaming starts, assistant message after streaming completes
+2. **Streaming**: Tokens are sent to client immediately via `res.write()` in `StreamingLLMStep`
+3. **Persistence**: Both messages are stored in the database for conversation history
+4. **Error Handling**: Response stream is properly closed on errors
+5. **Session Titles**: Background task generates titles using AI after first exchange
 
 ---
 
@@ -678,7 +797,7 @@ const ctx = new ExecutionContext({
 ```
 
 ---
-
+<!-- 
 ## Adding Tools (Future)
 
 Tools enable the AI to perform actions and access external resources. Here's the planned structure:
@@ -828,6 +947,13 @@ try {
 - **Use streaming** for: User-facing chat, long responses, real-time feedback
 - **Use non-streaming** for: Background processing, batch operations, when you need the full response before proceeding
 
+**Streaming with Persistence:**
+When using streaming in chat applications:
+- Stream tokens to client immediately for better UX
+- Store user message before streaming starts
+- Store assistant message after streaming completes (from `result.output`)
+- Handle errors gracefully by closing the stream properly
+
 ### 4. Provider Selection
 
 - Use environment variables or config for provider selection
@@ -936,8 +1062,16 @@ class RetryChain {
 
 **Solution:** 
 - Ensure `res` object is passed to chain constructor
-- Check that response headers are set before streaming starts
+- Check that response headers are set before streaming starts (`Content-Type: text/event-stream`)
 - Verify provider's `stream()` method is implemented correctly
+- Make sure `res.end()` is called after streaming completes (handled by `StreamingLLMStep`)
+
+### Issue: Messages not persisting during streaming
+
+**Solution:**
+- Store user message before calling `runner.run()`
+- Store assistant message after `runner.run()` completes using `result.output`
+- Don't try to store messages during streaming - wait for completion
 
 ### Issue: Usage not tracked
 
@@ -957,4 +1091,4 @@ class RetryChain {
 5. **Extend providers**: Add support for new LLM providers as needed
 
 For architecture details, see [Readme.md](./Readme.md) and [Chains.md](./Chains.md).
-
+ -->

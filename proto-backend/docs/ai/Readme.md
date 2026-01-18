@@ -1,4 +1,4 @@
-# Proto — AI Layer Architecture & Strategy
+# Proto's:  AI Layer Architecture & Strategy
 
 Proto’s AI layer is designed as **infrastructure**, not a feature.
 
@@ -14,8 +14,8 @@ Rather than coupling application logic directly to a single LLM provider or fram
 
 This document explains:
 
-1. The current AI compute layer (already implemented)
-2. The roadmap layers that complete the system
+1. The current AI compute layer 
+2. The layers that complete the system
 3. Why each layer exists and what problem it solves
 
 ---
@@ -62,7 +62,7 @@ Each layer can evolve independently without breaking the others.
 ## Current State: LLM Compute Layer (Implemented)
 
 The LLM compute layer is the foundation of the entire system.
-It is already implemented in Proto.
+
 
 ### Responsibilities
 
@@ -71,11 +71,14 @@ It is already implemented in Proto.
 * Enable streaming and non-streaming responses
 * Track usage (tokens, credits, model)
 * Keep provider-specific logic fully isolated
+* Support message persistence in chat applications
+* Enable session management and conversation history
 
 ---
 
 ## Data Flow Inside the AI Layer
 
+### Simple Path (AIServiceModule)
 ```
 ┌─────────────────────────────┐
 │          Client             │
@@ -107,9 +110,61 @@ It is already implemented in Proto.
 └─────────────────────────────┘
 ```
 
+### Chat Service Path (with Chains & Persistence)
+```
+┌─────────────────────────────┐
+│          Client             │
+└──────────────┬──────────────┘
+               POST /chat/:sessionId/message
+               ▼
+┌─────────────────────────────┐
+│   ChatController (Route)    │
+│  - Validates request        │
+│  - Calls ChatService        │
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│      ChatService            │
+│  - Loads conversation history│
+│  - Stores user message       │
+│  - Creates ExecutionContext  │
+│  - Runs Chain                │
+│  - Stores assistant message  │
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│      ChainRunner            │
+│  - Executes chain steps      │
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│   StreamingLLMStep          │
+│  - Streams tokens to client │
+│  - Accumulates full response │
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│      Provider Adapter       │
+│  - Normalized interface     │
+│  - stream()                  │
+└──────────────┬──────────────┘
+               ▼
+┌─────────────────────────────┐
+│      LLM Provider API       │
+└─────────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│      Database               │
+│  - Messages stored          │
+│  - Usage tracked            │
+│  - Session titles updated   │
+└─────────────────────────────┘
+```
+
 ---
 
-## Core Components (Current)
+## Core Components 
 
 ### 1. `AIService` — The Orchestrator
 
@@ -133,7 +188,7 @@ This keeps business logic stable even as models change.
 
 ---
 
-### 2. Adapter — The Normalization Boundary
+### 2. Adapter: The Normalization Boundary
 
 The adapter is the **hard boundary** between Proto and external LLM APIs.
 
@@ -198,13 +253,13 @@ This data becomes the foundation for:
 * Model comparison
 * Evaluation baselines
 
-Usage is not an afterthought—it is **infrastructure**.
+Usage is not an afterthought it is **infrastructure**.
 
----
 
-## Roadmap: Completing the AI System
 
-### 1. Execution Layer — Chains
+# AI Layers Explained : 
+
+### 1. Execution Layer:  Chains
 
 **Chains define how intelligence flows.**
 
@@ -225,7 +280,7 @@ This avoids prompt spaghetti and agent chaos.
 
 ---
 
-### 2. Capability Layer — Tools
+### 2. Capability Layer: Tools
 
 Tools give the system **controlled side effects**.
 
@@ -246,7 +301,7 @@ This keeps the system safe and debuggable.
 
 ---
 
-### 3. Knowledge Layer — RAG
+### 3. Knowledge Layer: RAG
 
 RAG is treated as a **pre-LLM pipeline**, not a prompt hack.
 
@@ -265,7 +320,7 @@ This allows:
 
 ---
 
-### 4. Measurement Layer — Evals
+### 4. Measurement Layer: Evals
 
 Evals make the system **safe to evolve**.
 

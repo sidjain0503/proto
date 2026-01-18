@@ -224,8 +224,19 @@ Save usage to database
 #### **Step 2B: Chain-Based Path (Advanced)**
 
 ```
-AIRoutes.js → AIService.runChat()
+AIRoutes.js → ChatService.sendMessage() or AIService.runChat()
 ```
+
+**Chat Service Flow (with Message Persistence):**
+
+The `ChatService` demonstrates a complete chat implementation:
+
+1. **Load Conversation History**: Retrieve existing messages from database
+2. **Store User Message**: Save user message to database before processing
+3. **Create Execution Context**: Build context with conversation history
+4. **Stream Response**: Stream tokens to client in real-time
+5. **Store Assistant Response**: Save complete response after streaming completes
+6. **Auto-Generate Title**: Background task generates session title using AI
 
 **Step 2.1: Create Execution Context**
 ```javascript
@@ -296,29 +307,48 @@ const adapter = new Adapter(ctx.provider, ctx.providerOpts);
 // Adapter looks up "deepseek" in model_registry
 // Returns: new DeepSeekProvider({ model: "..." })
 
-// 2. Call adapter.stream()
+// 2. Initialize accumulator for full response
+let fullText = "";
+
+// 3. Call adapter.stream()
 await adapter.stream(
   { messages: ctx.messages },
-  (token) => {
+  (token, info) => {
     // For each token received:
-    fullText += token;
-    res.write(token);  // Send to client immediately
+    if (typeof token === "string") {
+      fullText += token;
+      res.write(token);  // Send to client immediately
+    }
+    
+    // Handle usage info if provided during streaming
+    if (info?.usage) {
+      ctx.recordLLMUsage({
+        model: info.model,
+        usage: info.usage,
+      });
+    }
   }
 );
 
-// 3. Update context
+// 4. Close the response stream
+res.end();
+
+// 5. Update context with full response
 ctx.addMessage("assistant", fullText);
 ctx.recordLLMUsage({
   model: result.model,
-  usage: result.usage
+  usage: result.usage,
+  creditsUsed: result.creditsUsed,
 });
 
-// 4. Return result
+// 6. Return result with full text
 return {
   type: "final",
-  output: fullText
+  output: fullText  // Full response available here for persistence
 };
 ```
+
+**Note:** The full response (`fullText`) is available in `result.output` after streaming completes, allowing you to store it in the database.
 
 ---
 
@@ -384,7 +414,30 @@ Client receives tokens in real-time
 
 ---
 
-**Step 2.7: Usage Tracking**
+**Step 2.7: Message Persistence (Chat Service)**
+
+In chat applications, messages are persisted to maintain conversation history:
+
+```javascript
+// 1. User message stored before streaming
+await insertModel("message", {
+  session_id: sessionId,
+  content: userContent,
+  role: "user",
+}, "message");
+
+// 2. After streaming completes, store assistant response
+const result = await runner.run(chain, ctx);
+if (result && result.output) {
+  await insertModel("message", {
+    session_id: sessionId,
+    content: result.output,  // Full response from streaming
+    role: "assistant",
+  }, "message");
+}
+```
+
+**Step 2.8: Usage Tracking**
 
 After the chain completes:
 ```javascript
@@ -396,6 +449,18 @@ await insertModel("ai_usage", {
   tokens_used: ctx.usage.tokens,
   credits_used: calculatedCredits
 });
+```
+
+**Step 2.9: Session Title Generation (Background)**
+
+After the first user-assistant exchange, a background task generates a session title:
+
+```javascript
+// Triggered automatically after first exchange
+autoGenerateSessionTitle({ messages, sessionId, req });
+
+// Uses a simple AI call to summarize the first user message
+// Updates session title in database asynchronously
 ```
 
 ---
@@ -526,42 +591,55 @@ const provider = model_registry[providerName](opts);
 
 ### 🔍 Data Flow Example
 
-Let's trace a complete request:
+Let's trace a complete chat request with message persistence:
 
 ```
-1. User types: "What is 2+2?"
+1. User types: "What is 2+2?" in chat interface
 
 2. Frontend sends:
-   POST /ai/chat
-   { prompt: "What is 2+2?" }
+   POST /chat/:sessionId/message
+   [{ content: "What is 2+2?" }]
 
 3. Route validates and calls:
-   AIServiceModule.streamResponse({ userId, prompt, options }, res)
+   ChatService.sendMessage(sessionId, reqBody, req, res)
 
-4. AIServiceModule:
-   - Cleans prompt: "What is 2+2?"
-   - Builds messages: [{ role: "user", content: "What is 2+2?" }]
+4. ChatService:
+   - Sets streaming headers (Content-Type: text/event-stream)
+   - Loads conversation history from database
+   - Creates ExecutionContext with history
+
+5. Store user message:
+   - Inserts into database: { session_id, content: "What is 2+2?", role: "user" }
+
+6. Create and run chain:
+   - BasicChatChain with streaming enabled
+   - ChainRunner executes StreamingLLMStep
+
+7. StreamingLLMStep:
    - Creates adapter: new Adapter("deepseek", { model: "..." })
+   - Calls adapter.stream() with conversation history
+   - Accumulates fullText while streaming
 
-5. Adapter:
-   - Looks up "deepseek" in model_registry
-   - Returns: new DeepSeekProvider({ model: "..." })
-
-6. DeepSeekProvider.stream():
+8. DeepSeekProvider.stream():
    - Makes HTTP request to OpenRouter API
    - Streams response: "2 + 2 equals 4"
-   - Each token sent to callback
+   - Each token sent to callback → res.write(token)
+   - Client receives tokens in real-time
 
-7. AIServiceModule:
-   - Receives tokens, forwards to client via res.write()
-   - After completion, saves usage:
-     { user_id: "123", model: "deepseek/...", tokens_used: 25 }
+9. After streaming completes:
+   - StreamingLLMStep returns: { type: "final", output: "2 + 2 equals 4" }
+   - ChatService stores assistant message:
+     { session_id, content: "2 + 2 equals 4", role: "assistant" }
 
-8. Client receives:
-   "2 + 2 equals 4" (streamed token by token)
+10. Background task:
+    - autoGenerateSessionTitle() generates title from first exchange
+    - Updates session title in database
 
-9. Database updated:
-   ai_usage table has new row with usage info
+11. Database now contains:
+    - User message: "What is 2+2?"
+    - Assistant message: "2 + 2 equals 4"
+    - Usage tracking: { user_id, model, tokens_used }
+    - Updated session title
 ```
 
 ---
