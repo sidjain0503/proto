@@ -32,9 +32,7 @@ class APIInterceptor {
         response.headers.get("content-type")?.includes("application/json")
       ) {
         data = await response.json();
-      } else if ( 
-        response.status === 401
-      ) {
+      } else if (response.status === 401) {
         if (typeof window !== "undefined") {
           localStorage.clear();
           window.location.href = "/login";
@@ -123,11 +121,21 @@ export class BaseAPI {
 
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" ,     ...(token && { Authorization: `Bearer ${token}` }),},
-      body: JSON.stringify( [...prompt] ),
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify([...prompt]),
     });
 
     if (!response.body) throw new Error("No stream");
+
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        window.location.href = "/login";
+      }
+    }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
