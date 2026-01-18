@@ -32,6 +32,14 @@ class APIInterceptor {
         response.headers.get("content-type")?.includes("application/json")
       ) {
         data = await response.json();
+      } else if ( 
+        response.status === 401
+      ) {
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          window.location.href = "/login";
+        }
+        data = {};
       } else {
         data = {};
       }
