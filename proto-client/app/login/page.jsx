@@ -84,13 +84,24 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button
+            <div className='flex flex-col gap-2 my-2 w-full'>
+              <Button
               type="submit"
               className="w-full"
               disabled={loading}
             >
               {loading ? 'Logging in...' : 'Login'}
             </Button>
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+              onClick={() => router.push('/signup')}
+            >
+              New User ? Sign Up
+            </Button>
+            </div>
           </CardFooter>
         </form>
       </Card>

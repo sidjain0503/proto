@@ -55,12 +55,22 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const signup = async(name , email , password) => {
+    try {
+      await AuthAPI.signup(name, email , password);
+      return { success: true};
+    } catch (error) {
+      return { success: false, error: error.message};
+    }
+  }
+
   const value = {
     user,
     login,
     logout,
     isAuthenticated: !!user,
     loading,
+    signup,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

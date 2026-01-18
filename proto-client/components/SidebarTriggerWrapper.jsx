@@ -8,9 +8,13 @@ export function SidebarTriggerWrapper() {
   const { isAuthenticated, loading } = useAuth()
   const pathname = usePathname()
 
-  if (pathname === '/login' || (!isAuthenticated && !loading)) {
-    return null
-  }
+const ignorePaths = ['/login', '/signup']
+
+const shouldIgnore = ignorePaths.some(path => pathname.includes(path))
+
+if (shouldIgnore || loading) {
+  return null
+}
 
   return <SidebarTrigger />
 }
