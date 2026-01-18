@@ -87,15 +87,14 @@ const fetchModel = async (req, res) => {
   return new Promise(async (resolve, reject) => {
     try {
       const modelName = req.params.model;
-      const conditions = req.query.filters
-        ? { filters: JSON.parse(req.query.filters) }
+      const conditions = req.body.filters
+        ? { filters: req.body.filters }
         : {};
       const options = {
-        limit: req.query.limit ? parseInt(req.query.limit) : undefined,
-        offset: req.query.offset ? parseInt(req.query.offset) : undefined,
-        orderBy: req.query.orderBy || undefined,
+        limit: req.body.limit ? parseInt(req.body.limit) : undefined,
+        offset: req.body.offset ? parseInt(req.body.offset) : undefined,
+        orderBy: req.body.orderBy || undefined,
       };
-
 
       if (!modelName) {
         return reject({

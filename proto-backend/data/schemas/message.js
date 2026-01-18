@@ -7,7 +7,7 @@ module.exports = {
         minimum: 1 
       },
       session_id: { 
-        type: 'integer', 
+        type: 'string', 
         minimum: 1 
       },
       content: {
@@ -15,7 +15,7 @@ module.exports = {
         minimum: 1
       },
       role: {
-        type: 'text',
+        type: 'string',
         minimum: 1
       },
       created_at: { 
@@ -26,9 +26,5 @@ module.exports = {
         type: 'string', 
         format: 'date-time' 
       },
-      deleted_at: { 
-        type: ['string', 'null'], 
-        format: 'date-time' 
-      }
     }
   };
