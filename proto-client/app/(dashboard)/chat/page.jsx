@@ -96,7 +96,23 @@ export default function ChatPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col flex-1">
+        <div className="border-b px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Chat</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Powered by Basic Chat Chain
+              </p>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                Execution Active
+              </span>
+            </div>
+          </div>
+        </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
@@ -107,6 +123,9 @@ export default function ChatPage() {
                 <CardContent>
                   <p className="text-muted-foreground">
                     Start a conversation by typing a message below.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This chat is powered by the Basic Chat Chain execution system.
                   </p>
                 </CardContent>
               </Card>

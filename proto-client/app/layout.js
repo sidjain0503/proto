@@ -27,13 +27,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="h-screen w-full">
-              <SidebarTriggerWrapper />
-              {children}
-            </main>
-          </SidebarProvider>
+          {children}
         </Providers>
       </body>
     </html>

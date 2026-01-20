@@ -2,12 +2,15 @@
 import { menuItems } from "@/app/menu"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter, usePathname } from "next/navigation"
+import Link from "next/link"
 import {
   Profile,
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -37,20 +40,44 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader />
       <SidebarContent>
-        <SidebarGroup />
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-        <SidebarGroup />
+        {menuItems.map((item, index) => {
+          if (item.section) {
+            return (
+              <SidebarGroup key={item.section}>
+                <SidebarGroupLabel>{item.section}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuItem key={subItem.title}>
+                        <SidebarMenuButton asChild isActive={pathname === subItem.url}>
+                          <Link href={subItem.url}>
+                            <subItem.icon />
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )
+          }
+          
+          return (
+            <SidebarGroup key={item.title || index}>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                    <Link href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          )
+        })}
       </SidebarContent>
       <SidebarFooter>
         {user && (
