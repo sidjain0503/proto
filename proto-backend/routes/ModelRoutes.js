@@ -184,7 +184,7 @@ module.exports = (router) => {
    *       500:
    *         $ref: '#/components/responses/InternalServerError'
    */
-  router.get("/models/:model/fetch", validation, async (req, res, next) => {
+  router.post("/models/:model/fetch", validation, async (req, res, next) => {
     try {
       const result = await fetchModel(req, res);
       res.status(result.code).json(result.data);

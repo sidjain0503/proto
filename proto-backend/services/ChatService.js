@@ -68,7 +68,8 @@ const createSession = async (req) => {
       const newSession = await insertModel(
         "session",
         { title: "New Chat", user_id: req.user.id },
-        "session"
+        null,
+        ["id"]
       );
 
       if (newSession.id) {
@@ -79,6 +80,7 @@ const createSession = async (req) => {
         };
         await insertModel("message", { ...messageBody }, "message");
       }
+
 
       resolve({
         status: 200,

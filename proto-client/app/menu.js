@@ -9,11 +9,11 @@ import {
 } from "lucide-react"
 
 export const menuItems = [
-  // {
-  //   title: "Home",
-  //   url: "/",
-  //   icon: Home,
-  // },
+  {
+    title: "Home",
+    url: "/",
+    icon: Home,
+  },
   {
     section: "Products",
     items: [

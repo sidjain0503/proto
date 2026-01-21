@@ -1,5 +1,4 @@
 'use client'
-import { menuItems } from "@/app/menu"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
@@ -19,7 +18,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
 
-export function AppSidebar() {
+export function AppSidebar({menuItems}) {
+
+  console.log('menuItems',menuItems)
   const { user, logout, isAuthenticated, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
@@ -48,7 +49,7 @@ export function AppSidebar() {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {item.items.map((subItem) => (
-                      <SidebarMenuItem key={subItem.title}>
+                      <SidebarMenuItem key={subItem?.id || subItem.title}>
                         <SidebarMenuButton asChild isActive={pathname === subItem.url}>
                           <Link href={subItem.url}>
                             <subItem.icon />
@@ -64,7 +65,7 @@ export function AppSidebar() {
           }
           
           return (
-            <SidebarGroup key={item.title || index}>
+            <SidebarGroup key={item.id || index}>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>

@@ -1,13 +1,22 @@
+import axios from "axios";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/proto/api";
 
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 class APIInterceptor {
   static async interceptRequest(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
     const config = {
+      url: endpoint,
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -17,40 +26,27 @@ class APIInterceptor {
     };
 
     if (options.body && typeof options.body === "object") {
-      config.body = JSON.stringify(options.body);
+      config.data = options.body;
+      delete config.body;
     }
 
-    return { url, config };
+    return config;
   }
 
   static async interceptResponse(response) {
-    let data;
-    try {
-      // Some requests (like HEAD) might not have JSON responses
-      if (
-        response.status !== 204 &&
-        response.headers.get("content-type")?.includes("application/json")
-      ) {
-        data = await response.json();
-      } else if (response.status === 401) {
-        if (typeof window !== "undefined") {
-          localStorage.clear();
-          window.location.href = "/login";
-        }
-        data = {};
-      } else {
-        data = {};
-      }
-    } catch {
-      data = {};
-    }
-    if (!response.ok) {
-      throw new Error(data?.message || data?.error || "An error occurred");
-    }
-    return data;
+    return response.data;
   }
 
   static async interceptError(error) {
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      typeof window !== "undefined"
+    ) {
+      localStorage.clear();
+      window.location.href = "/login";
+      return {};
+    }
     throw error;
   }
 }
@@ -58,11 +54,8 @@ class APIInterceptor {
 export class BaseAPI {
   async request(endpoint, options = {}) {
     try {
-      const { url, config } = await APIInterceptor.interceptRequest(
-        endpoint,
-        options
-      );
-      const response = await fetch(url, config);
+      const config = await APIInterceptor.interceptRequest(endpoint, options);
+      const response = await axiosInstance.request(config);
       return await APIInterceptor.interceptResponse(response);
     } catch (error) {
       return APIInterceptor.interceptError(error);
