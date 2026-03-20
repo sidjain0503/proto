@@ -770,12 +770,12 @@ Add to `services/ai/model_registry.js`:
 
 ```javascript
 const OpenAIProvider = require("./providers/OpenAIProvider");
-const DeepSeekProvider = require("./providers/DeepSeekProvider");
+const OpenRouterProvider = require("./providers/OpenRouterProvider");
 const AnthropicProvider = require("./providers/AnthropicProvider");
 
 const model_registry = {
   openai: (opts = {}) => new OpenAIProvider(opts),
-  deepseek: (opts = {}) => new DeepSeekProvider(opts),
+  deepseek: (opts = {}) => new OpenRouterProvider(opts),
   anthropic: (opts = {}) => new AnthropicProvider(opts), // 👈 New provider
 };
 

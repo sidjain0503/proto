@@ -17,6 +17,7 @@ This document explains:
 1. The current AI compute layer 
 2. The layers that complete the system
 3. Why each layer exists and what problem it solves
+4. RAG implementation details (see `RAG.md`)
 
 ---
 

@@ -208,9 +208,9 @@ AIRoutes.js → AIServiceModule.streamResponse()
 ```
 AIServiceModule
     ↓
-Adapter (creates DeepSeekProvider)
+Adapter (creates OpenRouterProvider)
     ↓
-DeepSeekProvider.stream()
+OpenRouterProvider.stream()
     ↓
 HTTP Request to OpenRouter API
     ↓
@@ -305,7 +305,7 @@ const result = await step.execute(ctx);
 // 1. Create adapter
 const adapter = new Adapter(ctx.provider, ctx.providerOpts);
 // Adapter looks up "deepseek" in model_registry
-// Returns: new DeepSeekProvider({ model: "..." })
+// Returns: new OpenRouterProvider({ model: "..." })
 
 // 2. Initialize accumulator for full response
 let fullText = "";
@@ -354,7 +354,7 @@ return {
 
 **Step 2.5: Provider Makes API Call**
 
-**Inside DeepSeekProvider.stream():**
+**Inside OpenRouterProvider.stream():**
 
 ```javascript
 // 1. Prepare HTTP request
@@ -395,7 +395,7 @@ return {
 **Step 2.6: Response Flows Back**
 
 ```
-DeepSeekProvider
+OpenRouterProvider
     ↓ (returns usage)
 StreamingLLMStep
     ↓ (updates ctx, returns result)
@@ -567,7 +567,7 @@ ReActChain:
 ```javascript
 model_registry = {
   "openai": () => new OpenAIProvider(),
-  "deepseek": () => new DeepSeekProvider(),
+  "deepseek": () => new OpenRouterProvider(),
   "anthropic": () => new AnthropicProvider()
 }
 ```
@@ -578,7 +578,7 @@ model_registry = {
 if (provider === "openai") {
   return new OpenAIProvider();
 } else if (provider === "deepseek") {
-  return new DeepSeekProvider();
+  return new OpenRouterProvider();
 }
 // ... (messy!)
 
@@ -620,7 +620,7 @@ Let's trace a complete chat request with message persistence:
    - Calls adapter.stream() with conversation history
    - Accumulates fullText while streaming
 
-8. DeepSeekProvider.stream():
+8. OpenRouterProvider.stream():
    - Makes HTTP request to OpenRouter API
    - Streams response: "2 + 2 equals 4"
    - Each token sent to callback → res.write(token)
