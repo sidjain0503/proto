@@ -1,5 +1,5 @@
 module.exports = {
-    $id: 'base',
+    $id: 'message',
     type: 'object',
     properties: {
       id: { 
@@ -17,6 +17,9 @@ module.exports = {
       role: {
         type: 'string',
         minimum: 1
+      },
+      metadata: {
+        type: ['string', 'null'],
       },
       created_at: { 
         type: 'string', 
