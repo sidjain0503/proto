@@ -5,7 +5,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Send, Loader2, PencilIcon, Home } from "lucide-react";
+import { Send, Loader2, PencilIcon, Home, FileText } from "lucide-react";
 import aiService from "@/lib/Services/AIService";
 import MessageService from "@/lib/Services/MessageService";
 import MarkdownMessage from "@/components/shared/MarkdownMessage";
@@ -144,6 +144,8 @@ export default function ChatPage() {
           return newMessages;
         });
       }
+      // Re-fetch messages to get metadata (RAG sources) persisted by backend
+      await getAllMessages();
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -162,7 +164,7 @@ export default function ChatPage() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Chat</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Powered by Basic Chat Chain
+                Powered by AI Chain Engine (auto-detects RAG when documents are uploaded)
               </p>
             </div>
             <div className="text-xs text-muted-foreground">
@@ -193,24 +195,63 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className="max-w-4xl mx-auto space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-4 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    }`}
-                  >
-                    <MarkdownMessage content={message.content} />
+              {messages.map((message, index) => {
+                const meta = message.metadata
+                  ? typeof message.metadata === "string"
+                    ? JSON.parse(message.metadata)
+                    : message.metadata
+                  : null;
+                const sources = meta?.sources;
+
+                return (
+                  <div key={index}>
+                    <div
+                      className={`flex ${
+                        message.role === "user" ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-lg p-4 ${
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        }`}
+                      >
+                        <MarkdownMessage content={message.content} />
+                      </div>
+                    </div>
+                    {sources?.length > 0 && (
+                      <div className="flex justify-start mt-2 ml-1">
+                        <div className="max-w-[80%] space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            Sources used:
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {sources.map((src, i) => (
+                              <div
+                                key={i}
+                                className="flex items-center gap-1.5 text-xs bg-muted/60 border rounded-md px-2.5 py-1.5"
+                                title={src.preview}
+                              >
+                                <FileText className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                                <span className="font-medium truncate max-w-[140px]">
+                                  {src.documentTitle}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  chunk {src.chunkIndex + 1}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  ({(src.score * 100).toFixed(0)}%)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {loading && (
                 <div className="flex justify-start">
                   <div className="bg-muted rounded-lg p-4">

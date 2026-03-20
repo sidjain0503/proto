@@ -4,10 +4,11 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { MessageSquare, GitBranch, Brain, BarChart3, FileText, Settings } from "lucide-react"
+import { MessageSquare, GitBranch, Brain, BarChart3, FileText, Settings, FileUp } from "lucide-react"
 
 const quickLinks = [
   { title: "Chat", url: "/chat", icon: MessageSquare, description: "Start a conversation" },
+  { title: "Documents", url: "/documents", icon: FileUp, description: "Upload files for RAG" },
   { title: "Chains", url: "/chains", icon: GitBranch, description: "View execution chains" },
   { title: "Models", url: "/models", icon: Brain, description: "Manage AI models" },
   { title: "Usage", url: "/usage", icon: BarChart3, description: "Monitor usage" },

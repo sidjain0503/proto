@@ -3,6 +3,7 @@ import  AiService from './AIService'
 import  MessageService from './MessageService'
 import  ChatService from './ChatService'
 import  ModelService from './ModelService'
+import  DocumentService from './DocumentService'
 
 
 export {
@@ -10,5 +11,6 @@ export {
     AiService,
     MessageService,
     ChatService,
-    ModelService
+    ModelService,
+    DocumentService,
 }

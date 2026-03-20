@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, PencilIcon, Home } from "lucide-react";
+import { Loader2, Send, PencilIcon, Home, FolderIcon } from "lucide-react";
 import { useAppStore } from "@/contexts/Store";
 import { ChatService, ModelService } from "@/lib/Services";
 import { menuItems } from "@/app/menu";
@@ -22,6 +22,11 @@ const sessionItem= [
         title: "New Chat",
         url: "/chat",
         icon: PencilIcon,
+      },
+      {
+        title: "Document",
+        url: "/documents",
+        icon: FolderIcon,
       },
     ],
   },

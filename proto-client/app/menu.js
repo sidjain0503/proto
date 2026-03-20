@@ -5,7 +5,8 @@ import {
   BarChart3, 
   FileText, 
   Settings,
-  Home 
+  Home,
+  FileUp,
 } from "lucide-react"
 
 export const menuItems = [
@@ -21,6 +22,11 @@ export const menuItems = [
         title: "Chat",
         url: "/chat",
         icon: MessageSquare,
+      },
+      {
+        title: "Documents",
+        url: "/documents",
+        icon: FileUp,
       },
     ],
   },
