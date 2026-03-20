@@ -14,7 +14,8 @@ async function runChat(req, res) {
     messages: req.body,
     provider: "deepseek",
     providerOpts: {
-      model: "deepseek/deepseek-r1-0528:free",
+      model: "google/gemini-3.1-flash-lite-preview",
+      
     },
   });
 

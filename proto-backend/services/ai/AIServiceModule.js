@@ -6,7 +6,7 @@ class AIService {
   constructor({ logger = console } = {}) {
     this.logger = logger;
     this.adapter = new Adapter("deepseek", {
-      model: "deepseek/deepseek-r1-0528:free",
+      model: "google/gemini-3.1-flash-lite-preview",
     });
   }
 

@@ -1,11 +1,11 @@
 const config = require("../../../config");
 
-class DeepSeekProvider {
+class OpenRouterProvider {
   constructor({ 
     model = "",
     appName = "Proto AI"
   } = {}) {
-    console.log('deepseek model', model)
+    console.log('OpenRouter', model)
     this.model = model;
     this.apiKey = config.OPENROUTER_API_KEY;
     this.baseURL = config.OPENROUTER_BASE_URL;
@@ -150,5 +150,5 @@ class DeepSeekProvider {
   
 }
 
-module.exports = DeepSeekProvider;
+module.exports = OpenRouterProvider;
 
