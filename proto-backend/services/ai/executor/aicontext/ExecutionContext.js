@@ -12,6 +12,7 @@ class ExecutionContext {
         model: null,
         tokens: 0,
       };
+      this.retrievalResults = [];
   
       this.createdAt = Date.now();
 

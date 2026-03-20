@@ -4,6 +4,7 @@ const { updateModel } = require("../data/operations/update");
 const Adapter = require("./ai/Adapter");
 const ExecutionContext = require("./ai/executor/aicontext/ExecutionContext");
 const BasicChatChain = require("./ai/executor/chains/BasicChain");
+const RAGChain = require("./ai/executor/chains/RAGChain");
 const ChainRunner = require("./ai/executor/chains/ChainRunner");
 
 function autoGenerateSessionTitle({ messages, sessionId, req }) {
@@ -35,7 +36,7 @@ function autoGenerateSessionTitle({ messages, sessionId, req }) {
           ],
           provider: "deepseek",
           providerOpts: {
-            model: "deepseek/deepseek-r1-0528:free",
+            model: "google/gemini-3.1-flash-lite-preview",
           },
         });
 
@@ -124,7 +125,7 @@ const sendMessage = async (sessionId, reqBody, req, res) => {
         messages: messages,
         provider: "deepseek",
         providerOpts: {
-          model: "deepseek/deepseek-r1-0528:free",
+          model: "google/gemini-3.1-flash-lite-preview",
         },
       });
 
@@ -140,23 +141,44 @@ const sendMessage = async (sessionId, reqBody, req, res) => {
         "message"
       );
 
-      let chain;
-
-      chain = new BasicChatChain({
-        stream: true,
-        res,
+      // Check if user has any ready documents → use RAG chain
+      const userDocs = await getModel("document", {
+        filters: { user_id: req.user.id, status: "ready" },
+        select: "id",
       });
+
+      let chain;
+      if (userDocs.length > 0) {
+        chain = new RAGChain({ stream: true, res, topK: 5 });
+        console.log(`[RAG] Using RAGChain (${userDocs.length} docs available)`);
+      } else {
+        chain = new BasicChatChain({ stream: true, res });
+      }
 
       const runner = new ChainRunner();
       const result = await runner.run(chain, ctx);
 
       if (result && result.output) {
+        const metadata = ctx.retrievalResults?.length
+          ? {
+              sources: ctx.retrievalResults.map((r) => ({
+                documentId: r.documentId,
+                documentTitle: r.documentTitle,
+                filename: r.filename,
+                chunkIndex: r.chunkIndex,
+                score: r.score,
+                preview: r.content.slice(0, 200),
+              })),
+            }
+          : null;
+
         await insertModel(
           "message",
           {
             session_id: sessionId,
             content: result.output,
             role: "assistant",
+            metadata: metadata ? JSON.stringify(metadata) : null,
           },
           "message"
         );
