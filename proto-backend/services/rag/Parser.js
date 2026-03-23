@@ -32,17 +32,22 @@ class Parser {
   }
 
   async parsePDF(filePath) {
-    const pdfParse = require("pdf-parse");
+    const { PDFParse } = require("pdf-parse");
     const buffer = fs.readFileSync(filePath);
-    const data = await pdfParse(buffer);
-
-    return {
-      text: data.text,
-      metadata: {
-        pages: data.numpages,
-        info: data.info,
-      },
-    };
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const textResult = await parser.getText();
+      const infoResult = await parser.getInfo();
+      return {
+        text: textResult.text,
+        metadata: {
+          pages: textResult.total,
+          info: infoResult.info,
+        },
+      };
+    } finally {
+      await parser.destroy();
+    }
   }
 
   async parseText(filePath) {
