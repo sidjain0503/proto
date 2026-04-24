@@ -15,5 +15,6 @@ module.exports = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
   OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL,
+  OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL,
   ENVIRONMENT: process.env.ENVIRONMENT
 };

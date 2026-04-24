@@ -12,9 +12,9 @@ async function runChat(req, res) {
   const ctx = new ExecutionContext({
     userId: req.user.id,
     messages: req.body,
-    provider: "deepseek",
+    provider: "local",
     providerOpts: {
-      model: "google/gemini-3.1-flash-lite-preview",
+      model: "gemma4:e2b",
       
     },
   });

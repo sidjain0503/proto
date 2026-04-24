@@ -5,8 +5,8 @@ const Adapter = require("./Adapter");
 class AIService {
   constructor({ logger = console } = {}) {
     this.logger = logger;
-    this.adapter = new Adapter("deepseek", {
-      model: "google/gemini-3.1-flash-lite-preview",
+    this.adapter = new Adapter("local", {
+      model: "gemma4:e2b",
     });
   }
 
@@ -35,9 +35,6 @@ class AIService {
     const cleanPrompt = this.preprocessPrompt(prompt);
     const messages = this.buildMessages(cleanPrompt);
     let streamedText = "";
-    let usageInfo = null;
-    let model = "";
-
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     try {
@@ -57,13 +54,13 @@ class AIService {
        await insertModel("ai_usage", {
           user_id: userId || null,
           model:result?.model,
-          tokens_used: result?.promptTokens,
+          tokens_used: result?.usage?.total_tokens || 0,
           credits_used: result?.creditsUsed ,
         });
         this.logger.log("AI usage:", {
           user_id: userId || null,
           model:result?.model,
-          tokens_used: result?.promptTokens,
+          tokens_used: result?.usage?.total_tokens || 0,
           credits_used: result?.creditsUsed ,
         });
       }

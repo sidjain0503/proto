@@ -34,9 +34,9 @@ function autoGenerateSessionTitle({ messages, sessionId, req }) {
             },
             { role: "user", content: firstUserMsg.content },
           ],
-          provider: "deepseek",
+          provider: "local",
           providerOpts: {
-            model: "google/gemini-3.1-flash-lite-preview",
+            model: "gemma4:e2b",
           },
         });
 
@@ -123,9 +123,9 @@ const sendMessage = async (sessionId, reqBody, req, res) => {
       const ctx = new ExecutionContext({
         userId: req.user.id,
         messages: messages,
-        provider: "deepseek",
+        provider: "local",
         providerOpts: {
-          model: "google/gemini-3.1-flash-lite-preview",
+          model: "gemma4:e2b",
         },
       });
 
