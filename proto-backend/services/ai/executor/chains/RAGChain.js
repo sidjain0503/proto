@@ -3,9 +3,8 @@ const StreamingLLMStep = require("../steps/StreamingLLMStep");
 const LLMStep = require("../steps/LlmSteps");
 
 class RAGChain {
-  constructor({ stream = false, res = null, topK = 5 } = {}) {
+  constructor({ stream = false, topK = 5 } = {}) {
     this.stream = stream;
-    this.res = res;
     this.topK = topK;
     this._stepIndex = 0;
   }
@@ -29,7 +28,7 @@ class RAGChain {
 
     if (this._stepIndex === 2) {
       if (this.stream) {
-        return new StreamingLLMStep({ res: this.res });
+        return new StreamingLLMStep();
       }
       return new LLMStep();
     }

@@ -1,15 +1,13 @@
 const LLMStep = require("../steps/LlmSteps");
 const StreamingLLMStep = require("../steps/StreamingLLMStep");
 
-
 class BasicChatChain {
-    constructor({ stream = false, res = null } = {}) {
-        this.stream = stream;
-        this.res = res;
-      }  
-    
-  init(ctx) { // dependent on the execution context
-    if (!ctx.messages.some(m => m.role === "system")) {
+  constructor({ stream = false } = {}) {
+    this.stream = stream;
+  }
+
+  init(ctx) {
+    if (!ctx.messages.some((m) => m.role === "system")) {
       ctx.addMessage(
         "system",
         "You are a helpful assistant. Answer clearly and concisely."
@@ -19,13 +17,13 @@ class BasicChatChain {
 
   nextStep() {
     if (this.stream) {
-      return new StreamingLLMStep({ res: this.res });
+      return new StreamingLLMStep();
     }
     return new LLMStep();
   }
 
   shouldTerminate() {
-    return true; // single-step chain
+    return true;
   }
 }
 

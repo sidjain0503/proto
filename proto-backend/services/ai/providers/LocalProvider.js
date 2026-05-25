@@ -28,7 +28,7 @@ class LocalProvider {
     };
   }
 
-  async generate({ messages, maxTokens = 512, temperature = 0.2 }) {
+  async generate({ messages, maxTokens = 8192, temperature = 0.7 }) {
     const normalizedMessages = this.normalizeMessages(messages);
 
     const response = await fetch(`${this.baseURL}/api/chat`, {
@@ -61,7 +61,7 @@ class LocalProvider {
     };
   }
 
-  async stream({ messages, maxTokens = 512, temperature = 0.2 }, onToken) {
+  async stream({ messages, maxTokens = 4096, temperature = 0.7 }, onToken) {
     const normalizedMessages = this.normalizeMessages(messages);
 
     const response = await fetch(`${this.baseURL}/api/chat`, {

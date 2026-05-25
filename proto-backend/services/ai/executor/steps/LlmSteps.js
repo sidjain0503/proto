@@ -6,6 +6,8 @@ class LLMStep {
 
     const result = await adapter.generate({
       messages: ctx.messages,
+      maxTokens: ctx.providerOpts.maxTokens,
+      temperature: ctx.providerOpts.temperature,
     });
 
     ctx.addMessage("assistant", result.text);

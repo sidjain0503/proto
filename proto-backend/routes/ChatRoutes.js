@@ -33,11 +33,17 @@ module.exports = (router) => {
    */
   router.post("/chat/new", validation, async (req, res) => {
     try {
-      const result = await createSession(req);
-      res.status(result.status).json(result);
+      const result = await createSession(req, res);
+      if (!res.headersSent && result) {
+        res.status(result.status).json(result);
+      }
     } catch (err) {
       console.error(err);
-      res.status(err.code || 500).json({ error: err.message });
+      if (!res.headersSent) {
+        res.status(err.code || 500).json({ error: err.message });
+      } else if (!res.writableEnded) {
+        res.end();
+      }
     }
   });
 

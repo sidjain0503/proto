@@ -6,7 +6,9 @@ const app = express();
 
 require('./db');
 
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['X-Session-Id'], 
+}));
 app.use(express.json());
 
 app.use('/proto/api', routes);

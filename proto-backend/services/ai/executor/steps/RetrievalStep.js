@@ -22,7 +22,7 @@ class RetrievalStep {
     }
 
     const query = lastUserMsg.content;
-    console.log("[RAG] RetrievalStep: embedding query...");
+    ctx.writer?.status("retrieving");
 
     const queryEmbedding = await this.embeddingService.embed(query);
 
@@ -37,6 +37,7 @@ class RetrievalStep {
     });
 
     ctx.retrievalResults = reranked;
+    ctx.writer?.status("retrieved", { count: reranked.length });
 
     if (reranked.length > 0) {
       const contextBlock = reranked

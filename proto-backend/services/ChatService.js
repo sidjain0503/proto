@@ -6,6 +6,7 @@ const ExecutionContext = require("./ai/executor/aicontext/ExecutionContext");
 const BasicChatChain = require("./ai/executor/chains/BasicChain");
 const RAGChain = require("./ai/executor/chains/RAGChain");
 const ChainRunner = require("./ai/executor/chains/ChainRunner");
+const StreamWriter = require("./ai/StreamWriter");
 
 function autoGenerateSessionTitle({ messages, sessionId, req }) {
   (async () => {
@@ -63,145 +64,161 @@ function autoGenerateSessionTitle({ messages, sessionId, req }) {
   })();
 }
 
-const createSession = async (req) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const newSession = await insertModel(
-        "session",
-        { title: "New Chat", user_id: req.user.id },
-        null,
-        ["id"]
-      );
+const insertNewSession = async (req) => {
+  const newSession = await insertModel(
+    "session",
+    { title: "New Chat", user_id: req.user.id },
+    null,
+    ["id"]
+  );
 
-      if (newSession.id) {
-        const messageBody = {
-          session_id: newSession.id,
-          content: "You are a helpful assistant.",
-          role: "System",
-        };
-        await insertModel("message", { ...messageBody }, "message");
-      }
+  if (newSession.id) {
+    await insertModel(
+      "message",
+      {
+        session_id: newSession.id,
+        content: "You are a helpful assistant.",
+        role: "System",
+      },
+      "message"
+    );
+  }
 
-
-      resolve({
-        status: 200,
-        data: { id: newSession.id },
-      });
-    } catch (error) {
-      console.log("Error in creating session:", error.message);
-      reject({
-        code: 500,
-        message: error.message,
-      });
-    }
-  });
+  return newSession.id;
 };
 
-const sendMessage = async (sessionId, reqBody, req, res) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const { content } = reqBody[0];
+const createSession = async (req, res) => {
+  const sessionId = await insertNewSession(req);
+  const body = req.body;
+  const content = Array.isArray(body) ? body[0]?.content : body?.content;
 
-      if (!content || !sessionId) {
-        return reject({
-          code: 400,
-          message: "Bad request",
-        });
-      }
+  if (content && res) {
+    return sendMessage(
+      sessionId,
+      Array.isArray(body) ? body : [{ content }],
+      req,
+      res,
+      { isNewSession: true }
+    );
+  }
 
-      res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache");
-      res.setHeader("Connection", "keep-alive");
+  return {
+    status: 200,
+    data: { id: sessionId },
+  };
+};
 
-      const messages = await getModel("message", {
+const sendMessage = async (sessionId, reqBody, req, res, options = {}) => {
+  const { isNewSession = false } = options;
+
+  try {
+    const { content } = reqBody[0];
+
+    if (!content || !sessionId) {
+      throw { code: 400, message: "Bad request" };
+    }
+
+    res.setHeader("Content-Type", "application/x-ndjson");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.setHeader("X-Session-Id", String(sessionId));
+    if (isNewSession) {
+      res.setHeader("X-New-Session", "1");
+    }
+    res.flushHeaders();
+
+    const writer = new StreamWriter(res);
+
+    const [messages, userDocs] = await Promise.all([
+      getModel("message", {
         filters: { session_id: sessionId },
         select: "role,content",
-      });
+      }),
+      getModel("document", {
+        filters: { user_id: req.user.id, status: "ready" },
+        select: "id",
+      }),
+    ]);
 
-    autoGenerateSessionTitle({ messages, sessionId, req });
+    const userInsertPromise = insertModel(
+      "message",
+      { session_id: sessionId, content, role: "user" },
+      "message"
+    ).catch((e) => {
+      console.error("Failed to persist user message:", e.message);
+    });
 
-      const ctx = new ExecutionContext({
-        userId: req.user.id,
-        messages: messages,
-        provider: "local",
-        providerOpts: {
-          model: "gemma4:e2b",
-        },
-      });
+    const ctx = new ExecutionContext({
+      userId: req.user.id,
+      messages,
+      provider: "local",
+      providerOpts: { model: "gemma4:e2b" },
+      writer,
+    });
+    ctx.addMessage("user", content);
 
-      ctx.addMessage("user", content);
+    const chain =
+      userDocs.length > 0
+        ? new RAGChain({ stream: true, topK: 5 })
+        : new BasicChatChain({ stream: true });
+
+    const runner = new ChainRunner();
+    const result = await runner.run(chain, ctx);
+
+    await userInsertPromise;
+
+    let sources = [];
+    if (result && result.output) {
+      const metadata = ctx.retrievalResults?.length
+        ? {
+            sources: ctx.retrievalResults.map((r) => ({
+              documentId: r.documentId,
+              documentTitle: r.documentTitle,
+              filename: r.filename,
+              chunkIndex: r.chunkIndex,
+              score: r.score,
+              preview: r.content.slice(0, 200),
+            })),
+          }
+        : null;
+      sources = metadata?.sources || [];
 
       await insertModel(
         "message",
         {
           session_id: sessionId,
-          content: content,
-          role: "user",
+          content: result.output,
+          role: "assistant",
+          metadata: metadata ? JSON.stringify(metadata) : null,
         },
         "message"
       );
-
-      // Check if user has any ready documents → use RAG chain
-      const userDocs = await getModel("document", {
-        filters: { user_id: req.user.id, status: "ready" },
-        select: "id",
-      });
-
-      let chain;
-      if (userDocs.length > 0) {
-        chain = new RAGChain({ stream: true, res, topK: 5 });
-        console.log(`[RAG] Using RAGChain (${userDocs.length} docs available)`);
-      } else {
-        chain = new BasicChatChain({ stream: true, res });
-      }
-
-      const runner = new ChainRunner();
-      const result = await runner.run(chain, ctx);
-
-      if (result && result.output) {
-        const metadata = ctx.retrievalResults?.length
-          ? {
-              sources: ctx.retrievalResults.map((r) => ({
-                documentId: r.documentId,
-                documentTitle: r.documentTitle,
-                filename: r.filename,
-                chunkIndex: r.chunkIndex,
-                score: r.score,
-                preview: r.content.slice(0, 200),
-              })),
-            }
-          : null;
-
-        await insertModel(
-          "message",
-          {
-            session_id: sessionId,
-            content: result.output,
-            role: "assistant",
-            metadata: metadata ? JSON.stringify(metadata) : null,
-          },
-          "message"
-        );
-      }
-
-      resolve({
-        status: 200,
-        data: { message: "Message sent and stored successfully" },
-      });
-    } catch (error) {
-      console.log("Error in sending message:", error.message);
-      if (!res.headersSent) {
-        res.setHeader("Content-Type", "application/json");
-      }
-      if (!res.writableEnded) {
-        res.end();
-      }
-      reject({
-        code: 500,
-        message: error.message,
-      });
     }
-  });
+
+    writer.done({ sources });
+
+    if (!res.writableEnded) res.end();
+
+    autoGenerateSessionTitle({ messages, sessionId, req });
+
+    return {
+      status: 200,
+      data: { message: "Message sent and stored successfully" },
+    };
+  } catch (error) {
+    console.log("Error in sending message:", error.message);
+    if (res.headersSent) {
+      try {
+        new StreamWriter(res).error(error.message || "Internal error");
+      } catch {}
+      if (!res.writableEnded) res.end();
+    }
+    throw {
+      code: error.code || 500,
+      message: error.message || "Internal error",
+    };
+  }
 };
 
 module.exports = { createSession, sendMessage };

@@ -1,10 +1,11 @@
 class ExecutionContext {
-    constructor({ userId = null, messages = [], provider = "openai", providerOpts = {} } = {}) {
-      this.messages = messages; 
+    constructor({ userId = null, messages = [], provider = "openai", providerOpts = {}, writer = null } = {}) {
+      this.messages = messages;
       this.userId = userId;
       this.provider = provider;
       this.providerOpts = providerOpts;
-  
+      this.writer = writer;
+
       this.steps = [];
       this.totalTokens = 0;
       this.totalCost = 0;
@@ -13,10 +14,8 @@ class ExecutionContext {
         tokens: 0,
       };
       this.retrievalResults = [];
-  
-      this.createdAt = Date.now();
 
-      // console.log("ExecutionContext", this.messages, this.userId, this.provider, this.providerOpts);
+      this.createdAt = Date.now();
     }
   
     addMessage(role, content) {
