@@ -2,11 +2,14 @@
 
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppStoreProvider } from "@/contexts/Store";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export function Providers({ children }) {
   return (
-    <AuthProvider>
-      <AppStoreProvider>{children}</AppStoreProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppStoreProvider>{children}</AppStoreProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

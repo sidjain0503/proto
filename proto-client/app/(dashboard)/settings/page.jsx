@@ -1,22 +1,19 @@
 'use client'
 
-import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Building2, Key, Globe } from "lucide-react"
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { PageLayout } from '@/components/shared/PageLayout'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Building2, Key, Globe } from 'lucide-react'
 
 export default function SettingsPage() {
   return (
     <ProtectedRoute>
-      <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your organization settings and configuration.
-          </p>
-        </div>
-
+      <PageLayout
+        title="Settings"
+        description="Manage your organization settings and configuration."
+      >
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -47,7 +44,9 @@ export default function SettingsPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Environment:</span>
-              <span className="text-sm text-muted-foreground">Development</span>
+              <span className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-400">
+                Development
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -81,7 +80,7 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageLayout>
     </ProtectedRoute>
   )
 }

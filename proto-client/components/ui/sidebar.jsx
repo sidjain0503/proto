@@ -23,7 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import Image from "next/image";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -332,16 +331,29 @@ function SidebarFooter({
 
 function Profile({
   className,
-  img, 
   user,
   ...props
 }) {
+  const initials = (user?.name || 'U')
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+
   return (
-      <div className={cn("flex items-center gap-2", className)} {...props}>
-          <Image src={img} alt="Profile" width={32} height={32} quality={100} className="rounded-full object-fit h-8 w-8" />
-          <div className="flex flex-col">
-              <span className="text-sm font-medium">{user.name}</span>
-              <span className="text-sm font-medium">{user.email.slice(0, 15)}...</span>
+      <div className={cn("flex items-center gap-2 px-2 py-2 min-w-0", className)} {...props}>
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500/30 to-blue-500/30 text-xs font-semibold text-cyan-300 ring-1 ring-cyan-500/20"
+            aria-hidden="true"
+          >
+            {initials}
+          </div>
+          <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium">{user.name}</span>
+              <span className="truncate text-xs text-muted-foreground" title={user.email}>
+                {user.email}
+              </span>
           </div>
       </div>
   )

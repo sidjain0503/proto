@@ -1,9 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/shared/Sidebar";
 import { Providers } from "@/components/Providers";
-import { SidebarTriggerWrapper } from "@/components/SidebarTriggerWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Proto AI",
-  description: "AI-powered application",
+  title: "Proto",
+  description: "AI infrastructure you can reason about",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
