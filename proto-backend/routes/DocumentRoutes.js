@@ -18,10 +18,10 @@ const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
   fileFilter: (req, file, cb) => {
-    if (Parser.isSupported(file.mimetype)) {
+    if (Parser.isSupported(file.mimetype, file.originalname)) {
       cb(null, true);
     } else {
-      cb(new Error(`Unsupported file type: ${file.mimetype}`));
+      cb(new Error(`Unsupported file type: ${file.mimetype} (${file.originalname})`));
     }
   },
 });

@@ -6,15 +6,38 @@ class Parser {
     "application/pdf": "pdf",
     "text/plain": "txt",
     "text/markdown": "md",
+    "text/x-markdown": "md",
+    "application/x-markdown": "md",
     "text/csv": "csv",
   };
 
-  static isSupported(mimeType) {
-    return mimeType in Parser.SUPPORTED_TYPES;
+  static SUPPORTED_EXTENSIONS = {
+    ".pdf": "pdf",
+    ".txt": "txt",
+    ".md": "md",
+    ".markdown": "md",
+    ".csv": "csv",
+  };
+
+  static resolveType(mimeType, filename) {
+    if (mimeType && Parser.SUPPORTED_TYPES[mimeType]) {
+      return Parser.SUPPORTED_TYPES[mimeType];
+    }
+    if (filename) {
+      const ext = path.extname(filename).toLowerCase();
+      if (Parser.SUPPORTED_EXTENSIONS[ext]) {
+        return Parser.SUPPORTED_EXTENSIONS[ext];
+      }
+    }
+    return null;
+  }
+
+  static isSupported(mimeType, filename) {
+    return Parser.resolveType(mimeType, filename) !== null;
   }
 
   async parse(filePath, mimeType) {
-    const type = Parser.SUPPORTED_TYPES[mimeType];
+    const type = Parser.resolveType(mimeType, filePath);
     if (!type) {
       throw new Error(`Unsupported file type: ${mimeType}`);
     }
