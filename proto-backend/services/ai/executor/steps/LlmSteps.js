@@ -1,34 +1,52 @@
 const Adapter = require("../../Adapter");
+const { traceActiveObservation, buildTokenUsageDetails } = require("../../observability/LangfuseTracing");
 
 class LLMStep {
   async execute(ctx) {
-    const adapter = new Adapter(ctx.provider, ctx.providerOpts);
+    return traceActiveObservation(
+      "llm-generation",
+      async (llmGenerationObservation) => {
+        const adapter = new Adapter(ctx.provider, ctx.providerOpts);
 
-    const result = await adapter.generate({
-      messages: ctx.messages,
-      maxTokens: ctx.providerOpts.maxTokens,
-      temperature: ctx.providerOpts.temperature,
-    });
+        llmGenerationObservation?.update({
+          model: ctx.providerOpts.model,
+          input: ctx.messages,
+          metadata: { provider: ctx.provider, streaming: false },
+        });
 
-    ctx.addMessage("assistant", result.text);
+        const result = await adapter.generate({
+          messages: ctx.messages,
+          maxTokens: ctx.providerOpts.maxTokens,
+          temperature: ctx.providerOpts.temperature,
+        });
 
-    ctx.recordLLMUsage({
-      model: result?.model,
-      usage: result?.usage,
-    });
+        ctx.addMessage("assistant", result.text);
 
-    ctx.steps.push({
-      type: "llm",
-      model: result?.model || ctx.provider,
-      usage: result?.usage,
-      outputPreview: result.text.slice(0, 100),
-      timestamp: Date.now(),
-    });
+        ctx.recordLLMUsage({
+          model: result?.model,
+          usage: result?.usage,
+        });
 
-    return {
-      type: "final",
-      output: result.text,
-    };
+        llmGenerationObservation?.update({
+          output: result.text,
+          usageDetails: buildTokenUsageDetails(result.usage),
+        });
+
+        ctx.steps.push({
+          type: "llm",
+          model: result?.model || ctx.provider,
+          usage: result?.usage,
+          outputPreview: result.text.slice(0, 100),
+          timestamp: Date.now(),
+        });
+
+        return {
+          type: "final",
+          output: result.text,
+        };
+      },
+      { asType: "generation" }
+    );
   }
 }
 

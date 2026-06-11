@@ -7,6 +7,11 @@ const BasicChatChain = require("./ai/executor/chains/BasicChain");
 const RAGChain = require("./ai/executor/chains/RAGChain");
 const ChainRunner = require("./ai/executor/chains/ChainRunner");
 const StreamWriter = require("./ai/StreamWriter");
+const {
+  propagateTraceAttributes,
+  traceActiveObservation,
+  buildTokenUsageDetails,
+} = require("./ai/observability/LangfuseTracing");
 
 function autoGenerateSessionTitle({ messages, sessionId, req }) {
   (async () => {
@@ -43,9 +48,28 @@ function autoGenerateSessionTitle({ messages, sessionId, req }) {
 
         const adapter = new Adapter(simpleCtx.provider, simpleCtx.providerOpts);
         try {
-          const summaryResp = await adapter.generate({
-            messages: simpleCtx.messages,
-          });
+          const summaryResp = await traceActiveObservation(
+            "session-title-generation",
+            async (titleGenerationObservation) => {
+              titleGenerationObservation?.update({
+                model: simpleCtx.providerOpts.model,
+                input: simpleCtx.messages,
+                metadata: { provider: simpleCtx.provider },
+              });
+
+              const response = await adapter.generate({
+                messages: simpleCtx.messages,
+              });
+
+              titleGenerationObservation?.update({
+                output: response.text,
+                usageDetails: buildTokenUsageDetails(response.usage),
+              });
+
+              return response;
+            },
+            { asType: "generation" }
+          );
           let summary = summaryResp.text || "";
           if (summary) {
             summary = summary
@@ -164,7 +188,41 @@ const sendMessage = async (sessionId, reqBody, req, res, options = {}) => {
         : new BasicChatChain({ stream: true });
 
     const runner = new ChainRunner();
-    const result = await runner.run(chain, ctx);
+    const chainType = userDocs.length > 0 ? "rag" : "basic";
+
+    const result = await propagateTraceAttributes(
+      {
+        userId: String(req.user.id),
+        sessionId: String(sessionId),
+        tags: [chainType],
+      },
+      () =>
+        traceActiveObservation(
+          "chat-request",
+          async (chatRequestObservation) => {
+            chatRequestObservation?.update({
+              input: { content, chain: chainType },
+              metadata: {
+                provider: ctx.provider,
+                model: ctx.providerOpts.model,
+              },
+            });
+
+            const chainResult = await runner.run(chain, ctx);
+
+            chatRequestObservation?.update({
+              output: chainResult.output,
+              metadata: {
+                sourcesCount: ctx.retrievalResults?.length || 0,
+                totalTokens: ctx.usage?.tokens || 0,
+              },
+            });
+
+            return chainResult;
+          },
+          { asType: "chain" }
+        )
+    );
 
     await userInsertPromise;
 

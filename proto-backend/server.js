@@ -1,3 +1,4 @@
+require("./instrumentation");
 const app = require('./app');
 const { port } = require('./config');
 const db = require('./db');
