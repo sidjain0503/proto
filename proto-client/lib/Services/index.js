@@ -1,13 +1,14 @@
-import AuthAPI from './UserService'
+import UserService from './UserService'
 import MessageService from './MessageService'
 import ChatService from './ChatService'
-import ModelService from './ModelService'
+import SessionService from './SessionService'
 import DocumentService from './DocumentService'
 
 export {
-  AuthAPI,
+  UserService as AuthAPI,
+  UserService,
   MessageService,
   ChatService,
-  ModelService,
+  SessionService,
   DocumentService,
 }

@@ -1,57 +1,96 @@
-const express = require('express');
-const cors = require('cors');
-const routes = require('./routes');
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const routes = require("./routes");
+const config = require("./config");
+const logger = require("./lib/logger");
+const requestLogger = require("./middleware/requestLogger");
 
-const app = express(); 
+const app = express();
 
-require('./db');
+require("./db");
 
-app.use(cors({
-  exposedHeaders: ['X-Session-Id'], 
-}));
-app.use(express.json());
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
+  : ["http://localhost:3000", "http://localhost:3001"];
 
-app.use('/proto/api', routes);
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 
-// Error handling middleware - must be after all routes
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  
-  // If it's a rejected promise with a structured error object
-  if (err && typeof err === 'object' && err.code) {
-    return res.status(err.code).json({
-      success: false,
-      error: err.error || err.message || 'An error occurred',
-      message: err.message || err.error || 'An error occurred'
+app.use(
+  cors({
+    origin: corsOrigins,
+    exposedHeaders: ["X-Session-Id", "X-New-Session", "X-Request-Id"],
+  })
+);
+
+app.use(requestLogger);
+app.use((req, res, next) => {
+  if (req.id) {
+    res.setHeader("X-Request-Id", req.id);
+  }
+  next();
+});
+app.use(express.json({ limit: "1mb" }));
+
+app.get("/proto/api/health", async (req, res) => {
+  try {
+    const db = require("./db");
+    await db.query("SELECT 1");
+    res.json({
+      status: "healthy",
+      environment: config.ENVIRONMENT || "unknown",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    req.log.error({ err: error }, "Health check failed");
+    res.status(503).json({
+      status: "unhealthy",
+      error: error.message,
+      timestamp: new Date().toISOString(),
     });
   }
-  
-  // If it's a string error (like validation errors)
-  if (typeof err === 'string') {
+});
+
+app.use("/proto/api", routes);
+
+app.use((err, req, res, next) => {
+  const log = req.log || logger;
+  log.error({ err }, "Unhandled request error");
+
+  if (err && typeof err === "object" && err.code) {
+    return res.status(err.code).json({
+      success: false,
+      error: err.error || err.message || "An error occurred",
+      message: err.message || err.error || "An error occurred",
+    });
+  }
+
+  if (typeof err === "string") {
     return res.status(400).json({
       success: false,
       error: err,
-      message: err
+      message: err,
     });
   }
-  
-  // If it's an Error object
+
   if (err instanceof Error) {
     const statusCode = err.statusCode || 500;
     return res.status(statusCode).json({
       success: false,
-      error: err.message || 'Internal server error',
-      message: err.message || 'Internal server error'
+      error: err.message || "Internal server error",
+      message: err.message || "Internal server error",
     });
   }
-  
-  // Default error response
+
   res.status(500).json({
     success: false,
-    error: 'Internal server error',
-    message: 'An unexpected error occurred'
+    error: "Internal server error",
+    message: "An unexpected error occurred",
   });
 });
 
-// Export the app for testing or using in server.js
 module.exports = app;

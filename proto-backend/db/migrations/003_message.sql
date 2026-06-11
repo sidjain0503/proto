@@ -1,0 +1,12 @@
+-- 003: chat messages
+CREATE TABLE IF NOT EXISTS message (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  content MEDIUMTEXT NULL,
+  role VARCHAR(50) NOT NULL,
+  metadata JSON NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_message_session_id (session_id),
+  CONSTRAINT fk_message_session FOREIGN KEY (session_id) REFERENCES session (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

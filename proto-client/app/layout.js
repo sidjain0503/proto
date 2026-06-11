@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Proto",
-  description: "AI infrastructure you can reason about",
+  title: {
+    default: "Proto — AI SaaS Foundation",
+    template: "%s · Proto",
+  },
+  description:
+    "Full-stack SaaS foundation with auth, chat, RAG, and provider-agnostic AI.",
 };
 
 export default function RootLayout({ children }) {

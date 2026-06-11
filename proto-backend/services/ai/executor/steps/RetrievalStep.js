@@ -2,6 +2,9 @@ const EmbeddingService = require("../../../rag/EmbeddingService");
 const VectorStore = require("../../../rag/VectorStore");
 const Reranker = require("../../../rag/Reranker");
 const { traceActiveObservation } = require("../../observability/LangfuseTracing");
+const { createLogger } = require("../../../../lib/logger");
+
+const log = createLogger("rag.retrieval");
 
 class RetrievalStep {
   constructor({ topK = 5, threshold = 0.3 } = {}) {
@@ -69,11 +72,9 @@ class RetrievalStep {
             ctx.messages.unshift({ role: "system", content: ragSystemPrompt });
           }
 
-          console.log(
-            `[RAG] RetrievalStep: injected ${reranked.length} chunks into context`
-          );
+          log.debug({ chunkCount: reranked.length }, "Injected RAG context");
         } else {
-          console.log("[RAG] RetrievalStep: no relevant chunks found");
+          log.debug("No relevant RAG chunks found");
         }
 
         retrievalObservation?.update({

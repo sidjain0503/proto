@@ -66,7 +66,7 @@ module.exports = (router) => {
       );
       res.json(out);
     } catch (err) {
-      console.error(err);
+      req.log?.error({ err }, "AI chat stream failed");
       res.status(500).json({ error: err.message });
     }
   });
@@ -120,7 +120,7 @@ module.exports = (router) => {
       const result = await runChat(req, res);
       res.json(result);
     } catch (err) {
-      console.error(err);
+      req.log?.error({ err }, "AI generate failed");
       res.status(500).json({ error: err.message });
     }
   });

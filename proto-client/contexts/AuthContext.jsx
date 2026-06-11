@@ -1,8 +1,20 @@
 'use client'
 
 import { AuthAPI } from '@/lib/Services';
+import { appConfig } from '@/config/app.config';
 import { createContext, useContext, useState, useEffect } from 'react';
 
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 8; // 8 hours
+
+const setAuthCookie = (token) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `token=${token}; path=/; max-age=${AUTH_COOKIE_MAX_AGE}; SameSite=Lax`;
+};
+
+const clearAuthCookie = () => {
+  if (typeof document === 'undefined') return;
+  document.cookie = 'token=; path=/; max-age=0';
+};
 
 const AuthContext = createContext(null);
 
@@ -18,10 +30,12 @@ export function AuthProvider({ children }) {
     if (token && userData) {
       try {
         setUser(JSON.parse(userData));
+        setAuthCookie(token);
       } catch (error) {
         console.error('Error parsing user data:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        clearAuthCookie();
       }
     }
     setLoading(false);
@@ -36,6 +50,7 @@ export function AuthProvider({ children }) {
         email: response.email,
         name: response.name,
       }));
+      setAuthCookie(response.access_token);
       
       setUser({
         id: response.id,
@@ -52,6 +67,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    clearAuthCookie();
     setUser(null);
   };
 

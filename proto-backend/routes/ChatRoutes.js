@@ -1,4 +1,5 @@
 const { validation } = require("../middleware/authValidationMiddleware");
+const { chatRateLimiter } = require("../middleware/rateLimitMiddleware");
 const { createSession, sendMessage } = require("../services/ChatService");
 
 module.exports = (router) => {
@@ -31,14 +32,14 @@ module.exports = (router) => {
    *       500:
    *         $ref: '#/components/responses/InternalServerError'
    */
-  router.post("/chat/new", validation, async (req, res) => {
+  router.post("/chat/new", validation, chatRateLimiter, async (req, res) => {
     try {
       const result = await createSession(req, res);
       if (!res.headersSent && result) {
         res.status(result.status).json(result);
       }
     } catch (err) {
-      console.error(err);
+      req.log?.error({ err }, "Create chat session failed");
       if (!res.headersSent) {
         res.status(err.code || 500).json({ error: err.message });
       } else if (!res.writableEnded) {
@@ -90,7 +91,7 @@ module.exports = (router) => {
    *       500:
    *         $ref: '#/components/responses/InternalServerError'
    */
-  router.post("/chat/:sessionId/message", validation, async (req, res) => {
+  router.post("/chat/:sessionId/message", validation, chatRateLimiter, async (req, res) => {
     try {
       const result = await sendMessage(
         req.params.sessionId,
@@ -102,7 +103,7 @@ module.exports = (router) => {
         res.json(result);
       }
     } catch (err) {
-      console.error(err);
+      req.log?.error({ err, sessionId: req.params.sessionId }, "Send chat message failed");
       if (!res.headersSent) {
         res.status(err.code || 500).json({ error: err.message });
       } else if (!res.writableEnded) {

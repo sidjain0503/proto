@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { LogOut, MessageSquarePlus, Zap } from "lucide-react"
+import { appConfig } from "@/config/app.config"
 
 export function AppSidebar({ menuItems }) {
   const { user, logout } = useAuth()
@@ -40,17 +41,17 @@ export function AppSidebar({ menuItems }) {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <Link
-          href="/"
+          href="/dashboard"
           className="flex items-center gap-2.5 rounded-md px-1 py-1 transition-colors hover:bg-sidebar-accent"
-          aria-label="Proto home"
+          aria-label={`${appConfig.app.name} dashboard`}
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-500/30 ring-1 ring-cyan-500/20">
             <Zap className="h-4 w-4 text-cyan-400" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold tracking-tight">Proto</span>
+            <span className="text-sm font-semibold tracking-tight">{appConfig.app.name}</span>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Control Plane
+              Workspace
             </span>
           </div>
         </Link>

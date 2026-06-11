@@ -3,6 +3,9 @@ const Chunker = require("./Chunker");
 const EmbeddingService = require("./EmbeddingService");
 const VectorStore = require("./VectorStore");
 const { updateModel } = require("../../data/operations/update");
+const { createLogger } = require("../../lib/logger");
+
+const log = createLogger("rag.ingestion");
 
 class IngestionPipeline {
   constructor({ chunkSize = 512, chunkOverlap = 64 } = {}) {
@@ -33,8 +36,9 @@ class IngestionPipeline {
         throw new Error("Chunking produced no output");
       }
 
-      console.log(
-        `[RAG] Document ${documentId}: parsed ${text.length} chars → ${chunks.length} chunks`
+      log.info(
+        { documentId, charCount: text.length, chunkCount: chunks.length },
+        "Document parsed and chunked"
       );
 
       const embeddings = await this.embeddingService.embedBatch(chunks);
@@ -59,13 +63,11 @@ class IngestionPipeline {
         documentId
       );
 
-      console.log(
-        `[RAG] Document ${documentId}: ingestion complete (${chunks.length} chunks embedded)`
-      );
+      log.info({ documentId, chunkCount: chunks.length }, "Ingestion complete");
 
       return { chunkCount: chunks.length, status: "ready" };
     } catch (error) {
-      console.error(`[RAG] Ingestion failed for document ${documentId}:`, error.message);
+      log.error({ err: error, documentId }, "Ingestion failed");
 
       await updateModel(
         "document",

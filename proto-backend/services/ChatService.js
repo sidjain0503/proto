@@ -1,6 +1,11 @@
 const { getModel } = require("../data/operations/get");
 const { insertModel } = require("../data/operations/insert");
 const { updateModel } = require("../data/operations/update");
+const { assertSessionOwnership } = require("./SessionService");
+const appConfig = require("../lib/appConfig");
+const { createLogger } = require("../lib/logger");
+
+const log = createLogger("chat");
 const Adapter = require("./ai/Adapter");
 const ExecutionContext = require("./ai/executor/aicontext/ExecutionContext");
 const BasicChatChain = require("./ai/executor/chains/BasicChain");
@@ -40,9 +45,9 @@ function autoGenerateSessionTitle({ messages, sessionId, req }) {
             },
             { role: "user", content: firstUserMsg.content },
           ],
-          provider: "local",
+          provider: appConfig.ai.defaultProvider,
           providerOpts: {
-            model: "gemma4:e2b",
+            model: appConfig.ai.defaultModel,
           },
         });
 
@@ -79,11 +84,11 @@ function autoGenerateSessionTitle({ messages, sessionId, req }) {
             await updateModel("session", { title: summary }, sessionId);
           }
         } catch (e) {
-          console.log("Error summarizing for title:", e.message);
+          log.warn({ err: e, sessionId }, "Session title generation failed");
         }
       }
     } catch (e) {
-      console.log("Error in autoGenerateSessionTitle background task:", e.message);
+      log.warn({ err: e, sessionId }, "Session title background task failed");
     }
   })();
 }
@@ -142,6 +147,8 @@ const sendMessage = async (sessionId, reqBody, req, res, options = {}) => {
       throw { code: 400, message: "Bad request" };
     }
 
+    await assertSessionOwnership(sessionId, req.user.id);
+
     res.setHeader("Content-Type", "application/x-ndjson");
     res.setHeader("Cache-Control", "no-cache, no-transform");
     res.setHeader("Connection", "keep-alive");
@@ -170,21 +177,21 @@ const sendMessage = async (sessionId, reqBody, req, res, options = {}) => {
       { session_id: sessionId, content, role: "user" },
       "message"
     ).catch((e) => {
-      console.error("Failed to persist user message:", e.message);
+      log.error({ err: e, sessionId }, "Failed to persist user message");
     });
 
     const ctx = new ExecutionContext({
       userId: req.user.id,
       messages,
-      provider: "local",
-      providerOpts: { model: "gemma4:e2b" },
+      provider: appConfig.ai.defaultProvider,
+      providerOpts: { model: appConfig.ai.defaultModel },
       writer,
     });
     ctx.addMessage("user", content);
 
     const chain =
       userDocs.length > 0
-        ? new RAGChain({ stream: true, topK: 5 })
+        ? new RAGChain({ stream: true, topK: appConfig.ai.rag.topK })
         : new BasicChatChain({ stream: true });
 
     const runner = new ChainRunner();
@@ -265,7 +272,7 @@ const sendMessage = async (sessionId, reqBody, req, res, options = {}) => {
       data: { message: "Message sent and stored successfully" },
     };
   } catch (error) {
-    console.log("Error in sending message:", error.message);
+    log.error({ err: error, sessionId }, "Chat message failed");
     if (res.headersSent) {
       try {
         new StreamWriter(res).error(error.message || "Internal error");

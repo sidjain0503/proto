@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { AuthMarketingPanel } from '@/components/shared/AuthMarketingPanel'
+import { appConfig } from '@/config/app.config'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -31,7 +32,7 @@ export default function LoginPage() {
     const result = await login(email, password)
 
     if (result.success) {
-      router.push('/chat')
+      router.push(appConfig.auth.loginRedirect)
     } else {
       setError(result.error || 'Login failed. Please try again.')
     }

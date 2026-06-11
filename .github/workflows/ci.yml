@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  backend-contract-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: proto
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            proto-backend/package-lock.json
+            proto-client/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci --prefix proto-backend
+
+      - name: Configure backend test env
+        run: |
+          cat > proto-backend/.env <<'EOF'
+          PORT=8080
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_USER=root
+          DB_PASSWORD=root
+          DB_NAME=proto
+          ENVIRONMENT=local
+          SECURITY_TOKEN_LIFE=8h
+          SECURITY_TOKEN_SECRET=ci-test-secret-key-32chars-min
+          CORS_ORIGINS=http://localhost:3000
+          EOF
+
+      - name: Setup database
+        run: npm run db:setup --prefix proto-backend
+
+      - name: Run contract tests
+        run: npm run test --prefix proto-backend
+
+      - name: Security regression check
+        run: npm run security:check --prefix proto-backend
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: proto-client/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix proto-client
+
+      - name: Lint frontend
+        run: npm run lint --prefix proto-client
+
+      - name: Build frontend
+        run: npm run build --prefix proto-client

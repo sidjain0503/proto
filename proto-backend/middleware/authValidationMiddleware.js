@@ -1,5 +1,8 @@
 const config = require("../config");
-const jwt = require('jsonwebtoken')
+const jwt = require("jsonwebtoken");
+const { createLogger } = require("../lib/logger");
+
+const log = createLogger("auth");
 
 const _getToken = (req) => {
   try {
@@ -15,7 +18,7 @@ const _getToken = (req) => {
     user.token = reqToken;
     return user;
   } catch (err) {
-    console.log("Error in _getToken", err);
+    log.debug({ err }, "JWT validation failed");
     return null;
   }
 };

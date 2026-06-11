@@ -5,6 +5,9 @@ const { getModel } = require("../data/operations/get");
 const { insertModel } = require("../data/operations/insert");
 const { IngestionPipeline, Parser } = require("../services/rag");
 const db = require("../db");
+const { createLogger } = require("../lib/logger");
+
+const log = createLogger("documents");
 
 const storage = multer.diskStorage({
   destination: path.join(__dirname, "../uploads"),
@@ -74,7 +77,7 @@ module.exports = (router) => {
         // Fire-and-forget ingestion
         const pipeline = new IngestionPipeline();
         pipeline.ingest(doc).catch((err) => {
-          console.error("[RAG] Background ingestion error:", err.message);
+          log.error({ err, documentId: doc.id }, "Background ingestion failed");
         });
 
         res.json({
@@ -191,7 +194,7 @@ module.exports = (router) => {
 
       const pipeline = new IngestionPipeline();
       pipeline.ingest(doc).catch((err) => {
-        console.error("[RAG] Re-ingestion error:", err.message);
+        log.error({ err, documentId: doc.id }, "Re-ingestion failed");
       });
 
       res.json({ code: 200, message: "Re-ingestion started" });

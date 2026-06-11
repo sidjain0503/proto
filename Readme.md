@@ -1,74 +1,80 @@
-# Proto - AI SaaS Template for JS Devs
+# Proto — AI SaaS Foundation for JS Devs
 
-**Proto is a full-stack AI SaaS template that treats AI as infrastructure, not a feature.**
+**Proto is a forkable full-stack SaaS template that treats AI as infrastructure, not a feature.**
 
 <img width="1710" height="771" alt="image" src="https://github.com/user-attachments/assets/e72b64d0-20fc-407f-b21e-8d8125659ec2" />
 
-
-## Philosophy
-
-**AI as Infrastructure**: Rather than coupling your app to a single LLM provider, Proto builds disciplined abstractions that let you:
-- Switch models without rewriting code
-- Compose complex AI workflows
-- Track costs and usage systematically
-- Evolve your AI capabilities over time
-
-**The Core Principle**: Treat LLMs as **volatile compute dependencies**—they change constantly, but your application logic shouldn't.
-
 ## What's Inside
 
-**Full-Stack Template**:
-- **Backend** (`proto-backend/`): Node.js/Express with modular AI layer
-- **Frontend** (`proto-client/`): Next.js with chat interface
-- **AI Layer**: Provider-agnostic abstraction with chains, streaming, and persistence
+- **Backend** (`proto-backend/`) — Node.js/Express, JWT auth, RAG, streaming chat
+- **Frontend** (`proto-client/`) — Next.js SaaS shell (marketing, auth, dashboard, settings)
+- **AI Layer** — Provider-agnostic chains, streaming, Langfuse tracing
+- **Foundation tooling** — Migrations, Docker MySQL, config-driven features
 
-**Core Features**:
-- ✅ Multi-provider support (OpenAI, DeepSeek, extensible)
-- ✅ Streaming responses with message persistence
-- ✅ Session management and conversation history
-- ✅ Usage tracking and cost monitoring
-- ✅ Authentication & user management
-- ✅ Chain-based execution layer (for complex workflows)
-
-## Architecture
-
-Proto's AI stack is built in **5 layers**, each independently evolvable:
-
-1. **LLM Compute Layer** ✅ - Provider abstraction (done)
-2. **Execution Layer** ✅ - Chains for control flow (done)
-3. **Capability Layer** 🔜 - Tools & side effects
-4. **Knowledge Layer** 🔜 - RAG & context retrieval
-5. **Measurement Layer** 🔜 - Evals & quality tracking
-
-## Quick Start
+## Quick Start (< 15 min)
 
 ```bash
-# Backend
-cd proto-backend
+# 1. Install dependencies
 npm install
-npm start
+npm install --prefix proto-backend
+npm install --prefix proto-client
 
-# Frontend
-cd proto-client
-npm install
+# 2. Configure environment
+cp proto-backend/.env.example proto-backend/.env
+cp proto-client/.env.local.example proto-client/.env.local
+# Edit proto-backend/.env — set SECURITY_TOKEN_SECRET (min 16 chars)
+
+# 3. Boot MySQL + migrate + seed
+npm run setup
+
+# 4. Verify & run
+npm run doctor
 npm run dev
 ```
 
+- **Marketing site:** http://localhost:3000
+- **App dashboard:** http://localhost:3000/dashboard (after login)
+- **API health:** http://localhost:8080/proto/api/health
+- **Seed user:** `dev@proto.local` / `password123`
+
+## Fork for a Client Project
+
+See **[docs/FORK.md](./docs/FORK.md)** for the day-1 checklist and **[docs/CUSTOMIZE.md](./docs/CUSTOMIZE.md)** for branding, features, and deployment.
+
+Edit `app.config.js` to set app name, enabled features, and AI defaults.
+
+## Core Features
+
+- Multi-provider LLM support (Ollama, OpenAI, OpenRouter)
+- Streaming chat with session history
+- Document upload + RAG
+- JWT authentication with protected app shell
+- Usage tracking hooks
+- Langfuse observability (optional)
+- Config-driven SaaS UI (billing/team stubs included)
+
 ## Documentation
 
-- **[AI Architecture](./proto-backend/docs/ai/Readme.md)** - Philosophy & layered design
-- **[Usage Guide](./proto-backend/docs/ai/Usage.md)** - How to use chains, add providers, extend
-- **[Architecture Details](./proto-backend/docs/ai/Architecture.md)** - Deep dive into data flow
+| Doc | Description |
+|-----|-------------|
+| [FORK.md](./docs/FORK.md) | Day-1 fork checklist |
+| [CUSTOMIZE.md](./docs/CUSTOMIZE.md) | Branding, features, deploy |
+| [Foundation Plan](./docs/foundation-plan/README.md) | Roadmap & todos |
+| [SaaS Frontend](./docs/foundation-plan/SAAS-FRONTEND.md) | Frontend architecture |
+| [AI Architecture](./proto-backend/docs/ai/Readme.md) | AI layer design |
+| [RAG Guide](./proto-backend/docs/ai/RAG.md) | Document ingestion & retrieval |
 
-## Why Proto?
+## Scripts
 
-Most AI integrations are **brittle**—they break when models change, providers update APIs, or you need to add capabilities.
-
-Proto is **designed to evolve**: swap providers, add tools, implement RAG, measure quality—all without rewriting your application logic.
-
-**Perfect for**: Building production AI features that need to survive model changes, cost optimization, and feature expansion.
+| Command | Description |
+|---------|-------------|
+| `npm run setup` | Docker MySQL + migrations + seed |
+| `npm run dev` | Backend + frontend concurrently |
+| `npm run doctor` | Health checks for local stack |
+| `npm run db:migrate` | Apply pending migrations |
+| `npm run test` | Run backend contract tests (16 tests) |
+| `npm run security:check` | Backend security regression |
 
 ---
 
 *Proto explores how intelligence layers live inside real software products without breaking everything.*
-

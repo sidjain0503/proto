@@ -5,156 +5,95 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const config = require("../config");
 
-const getAllUsers = async () => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const allusers = await getModel("users");
-
-      resolve({
-        code: 200,
-        data: allusers,
-      });
-    } catch (err) {
-      return reject({
-        code: 500,
-        error: err,
-      });
-    }
+const getCurrentUser = async (userId) => {
+  const users = await getModel("users", {
+    filters: { id: userId },
+    select: "id,name,email,created_at",
   });
+
+  if (!users.length) {
+    throw Object.assign(new Error("User not found"), { code: 404 });
+  }
+
+  return users[0];
 };
 
 const signupUser = async (reqBody) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const { name, email, password } = reqBody;
+  const { name, email, password } = reqBody;
 
-      if (!name || !email || !password) {
-        return reject({
-          code: 400,
-          message: "Bad request, Please provide correct credentials",
-        });
-      }
+  if (!name || !email || !password) {
+    throw Object.assign(
+      new Error("Bad request, Please provide correct credentials"),
+      { code: 400 }
+    );
+  }
 
-      const userExists = await getModel("users", { filters: { email: email } });
-
-      if (userExists.length) {
-        return reject({
-          code: 500,
-          message: "User already registered",
-        });
-      }
-
-      const salt = await bcrypt.genSalt(10); // 10 = number of salt rounds
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      const newUser = {
-        name,
-        email,
-        password: hashedPassword,
-      };
-
-      await insertModel("users", newUser, "user");
-
-      resolve({
-        code: 200,
-        data: "User Added Successfully",
-      });
-    } catch (err) {
-      const statusCode = err.statusCode || 500;
-      return reject({
-        code: statusCode,
-        error: err.message || err,
-        message: err.message || "Signup Failed",
-      });
-    }
+  const userExists = await getModel("users", {
+    filters: { email },
+    select: "id",
   });
-};
 
-const updateUser = async (reqBody) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const { id } = reqBody;
-      if (!id) {
-        return reject({
-          code: 400,
-          message: "Bad request id not provided",
-        });
-      }
-      await updateModel("users", reqBody, reqBody.id, "user");
+  if (userExists.length) {
+    throw Object.assign(new Error("User already registered"), { code: 409 });
+  }
 
-      resolve({
-        code: 200,
-        data: "User Updated Successfully",
-      });
-    } catch (err) {
-      const statusCode = err.statusCode || 500;
-      return reject({
-        code: statusCode,
-        error: err.message || err,
-        message: err.message || "Update Failed",
-      });
-    }
-  });
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  await insertModel(
+    "users",
+    { name, email, password: hashedPassword },
+    "user"
+  );
+
+  return { code: 201, data: { message: "User Added Successfully" } };
 };
 
 const loginUser = async (reqBody) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const { email, password } = reqBody;
+  const { email, password } = reqBody;
 
-      if (!email || !password) {
-        return reject({
-          code: 400,
-          message: "Bad request, Please provide correct credentials",
-        });
-      }
+  if (!email || !password) {
+    throw Object.assign(
+      new Error("Bad request, Please provide correct credentials"),
+      { code: 400 }
+    );
+  }
 
-      let _user = await getModel("users", { filters: { email: email } });
-
-      if (!_user.length) {
-        return reject({
-          code: 500,
-          message: "User does not exists",
-        });
-      }
-      _user = _user[0];
-      const isValidPassword = await bcrypt.compare(password, _user.password);
-
-      if (!isValidPassword) {
-        return reject({
-          code: 401,
-          message: "Login Failed",
-        });
-      }
-
-      const _token = {
-        email: _user.email,
-        name: _user.name,
-        id: _user.id,
-      };
-      _token.access_token = jwt.sign(_token, config.AUTH_TOKEN_SECRET, {
-        expiresIn: config.AUTH_TOKEN_LIFE,
-        algorithm: "HS256",
-      });
-
-      resolve({
-        code: 200,
-        data: _token,
-      });
-    } catch (err) {
-      const statusCode = err.statusCode || 500;
-      return reject({
-        code: statusCode,
-        error: err.message || err,
-        message: err.message || "Update Failed",
-      });
-    }
+  const rows = await getModel("users", {
+    filters: { email },
+    select: "id,name,email,password",
   });
+
+  if (!rows.length) {
+    throw Object.assign(new Error("Invalid email or password"), { code: 401 });
+  }
+
+  const user = rows[0];
+  const isValidPassword = await bcrypt.compare(password, user.password);
+
+  if (!isValidPassword) {
+    throw Object.assign(new Error("Invalid email or password"), { code: 401 });
+  }
+
+  const tokenPayload = {
+    email: user.email,
+    name: user.name,
+    id: user.id,
+  };
+
+  const access_token = jwt.sign(tokenPayload, config.AUTH_TOKEN_SECRET, {
+    expiresIn: config.AUTH_TOKEN_LIFE,
+    algorithm: "HS256",
+  });
+
+  return {
+    code: 200,
+    data: { ...tokenPayload, access_token },
+  };
 };
 
 module.exports = {
-  getAllUsers,
+  getCurrentUser,
   signupUser,
-  updateUser,
   loginUser,
 };

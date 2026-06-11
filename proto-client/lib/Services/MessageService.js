@@ -1,13 +1,7 @@
-import BaseAPI from '@/lib/api'
+import SessionService from '@/lib/Services/SessionService'
 
-class AuthAPI extends BaseAPI {
-  _url = "/models/message";
-
-  async getAllMessages(body) {
-    return this.post(`${this._url}/fetch`,  body);
-  }
-
+const MessageService = {
+  getAllMessages: (sessionId) => SessionService.getMessages(sessionId),
 }
 
-const authAPI = new AuthAPI();
-export default authAPI;
+export default MessageService

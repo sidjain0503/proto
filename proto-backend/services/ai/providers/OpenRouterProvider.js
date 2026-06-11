@@ -5,7 +5,6 @@ class OpenRouterProvider {
     model = "",
     appName = "Proto AI"
   } = {}) {
-    console.log('OpenRouter', model)
     this.model = model;
     this.apiKey = config.OPENROUTER_API_KEY;
     this.baseURL = config.OPENROUTER_BASE_URL;

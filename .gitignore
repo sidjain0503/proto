@@ -14,8 +14,8 @@ dist-ssr
 coverage
 *.local
 
-package-lock.json
 .env
+langfuse/.env
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

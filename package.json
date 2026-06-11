@@ -1,0 +1,22 @@
+{
+  "name": "proto",
+  "private": true,
+  "description": "Proto — forkable full-stack AI SaaS foundation",
+  "scripts": {
+    "docker:up": "docker compose up -d mysql",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f mysql",
+    "db:ensure": "npm run db:ensure --prefix proto-backend",
+    "db:migrate": "npm run db:migrate --prefix proto-backend",
+    "db:seed": "npm run db:seed --prefix proto-backend",
+    "db:setup": "npm run db:ensure --prefix proto-backend && npm run db:migrate --prefix proto-backend && npm run db:seed --prefix proto-backend",
+    "setup": "npm run docker:up && node scripts/wait-for-mysql.js && npm run db:setup",
+    "dev": "concurrently -n backend,client -c cyan,magenta \"npm run dev --prefix proto-backend\" \"npm run dev --prefix proto-client\"",
+    "test": "npm run test --prefix proto-backend",
+    "doctor": "node scripts/doctor.js",
+    "security:check": "npm run security:check --prefix proto-backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

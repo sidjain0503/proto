@@ -1,10 +1,12 @@
 let pipeline = null;
+const { createLogger } = require("../../lib/logger");
+const log = createLogger("rag.embedding");
 
 async function getPipeline() {
   if (!pipeline) {
     const { pipeline: tfPipeline } = await import("@xenova/transformers");
     pipeline = await tfPipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
-    console.log("[RAG] Embedding model loaded: all-MiniLM-L6-v2 (384d)");
+    log.info({ model: "all-MiniLM-L6-v2", dimensions: 384 }, "Embedding model loaded");
   }
   return pipeline;
 }

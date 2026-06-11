@@ -1,6 +1,9 @@
 const mysql = require("mysql2/promise");
 const { database } = require("../config");
 const { ENVIRONMENT } = require("../config");
+const { createLogger } = require("../lib/logger");
+
+const log = createLogger("db");
 
 let additionalDbConfig = {};
 
@@ -11,6 +14,7 @@ if (ENVIRONMENT !== "local") {
     },
   };
 }
+
 class DatabaseConnection {
   constructor() {
     this.pool = mysql.createPool({
@@ -29,9 +33,9 @@ class DatabaseConnection {
   async init() {
     try {
       await this.pool.query("SELECT 1");
-      console.log("DB Initialisation Successful");
+      log.info("Database connection established");
     } catch (error) {
-      console.error("Initial Starttup Error: DB unreachable:", error.message);
+      log.fatal({ err: error }, "Database unreachable at startup");
       process.exit(1);
     }
   }
@@ -47,6 +51,7 @@ class DatabaseConnection {
 
   async close() {
     await this.pool.end();
+    log.info("Database pool closed");
   }
 }
 

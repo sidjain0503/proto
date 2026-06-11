@@ -1,23 +1,41 @@
 const db = require("../../db");
 const { buildWhereClause } = require("../../helpers/data");
+const {
+  assertTableAllowed,
+  assertSelectClause,
+  assertOrderByClause,
+  stripSensitiveColumns,
+} = require("../tables");
 
 async function getModel(tableName, conditions = {}, options = {}) {
+  assertTableAllowed(tableName);
+
   const { where, params } = await buildWhereClause(conditions.filters);
-  
+
   const select = conditions.select || "*";
-  const orderBy = options.orderBy || 'id';
+  assertSelectClause(select);
+
+  const orderBy = options.orderBy || "id";
+  assertOrderByClause(orderBy);
+
   const limit = options.limit || 100;
   const offset = options.offset || 0;
-  let sql = `SELECT ${select} FROM ${tableName} ${where}`;
 
-  // LIMIT and OFFSET cannot use placeholders in MySQL - they must be literal values
+  let sql = `SELECT ${select} FROM ${tableName} ${where}`;
   sql += ` ORDER BY ${orderBy}`;
-  const limitValue = parseInt(limit, 10) || 100;
-  const offsetValue = parseInt(offset, 10) || 0;
+
+  const limitValue = Math.min(parseInt(limit, 10) || 100, 500);
+  const offsetValue = Math.max(parseInt(offset, 10) || 0, 0);
   sql += ` LIMIT ${limitValue} OFFSET ${offsetValue}`;
-  const queryParams = [];
-  if (params && params.length) queryParams.push(...params);
-  return await db.query(sql, queryParams);
+
+  const queryParams = params?.length ? [...params] : [];
+  const rows = await db.query(sql, queryParams);
+
+  if (select === "*") {
+    return stripSensitiveColumns(tableName, rows);
+  }
+
+  return rows;
 }
 
 module.exports = {

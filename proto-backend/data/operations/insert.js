@@ -1,6 +1,7 @@
 const db = require("../../db");
 const { validateData } = require("../validators");
 const { v4: uuidv4 } = require("uuid");
+const { assertTableAllowed } = require("../tables");
 
 async function insertModel(
   tableName,
@@ -8,6 +9,8 @@ async function insertModel(
   schemaName = null,
   binaryUUIDFields = []
 ) {
+  assertTableAllowed(tableName);
+
   if (schemaName) {
     await validateData(data, schemaName);
   }
